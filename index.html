@@ -1,9 +1,42 @@
 <html>
   <head>
-    <title>Tetris</title>
+    <title>Cowtris</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
     <script type="text/javascript" src="script.js"></script>
   </head>
   <body onload="init()">
-    <canvas width="800" height="600"></canvas>
+  	<div id="container">
+	  	<div id="left">
+	  		<canvas width="800" height="600"></canvas>
+	  	</div>
+		
+		<div id="right">
+			<img id="title" src="./resources/images/title.png" />
+			
+			<div id="info_container">
+				<table>
+					<tr>
+						<td>Score</td>
+						<td id="score">0</td>
+					</tr>
+					<tr>
+						<td>Rows</td>
+						<td id="rows">0</td>					
+					</tr>
+					<tr>
+						<td>Level</td>
+						<td id="level">1</td>					
+					</tr>
+					<tr>
+						<td>Next</td>
+						<td id="next">
+							<div id="next_image"></div><br>
+							<span id="next_name"></span>
+						</td>					
+					</tr>
+				</table>
+			</div>
+		</div>	
+	</div>	
   </body>
 </html>

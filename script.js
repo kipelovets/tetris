@@ -345,7 +345,7 @@ function init() {
                 var rotation = Math.floor(Math.random() * 4);
                 var newFigure = new tetrisFigures[num](4, -1, rotation);
                 if (bottom.isFallen(newFigure)) {
-                    alert('Game over');
+                    // alert('Game over');
                     engine.stop();
                     return;
                 }
