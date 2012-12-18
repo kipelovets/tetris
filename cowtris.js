@@ -92,6 +92,11 @@ var Tetrid = function (breed) {
 };
 
 var Board = function() {
+    var ctx = document.getElementById('canvas').getContext('2d')
+        , cowMap = new Image();
+
+    cowMap.src = './resources/images/source.png';
+
 	return {
 		Square : function () {  // stores the contents of the board
 			if (!self._board) {
@@ -116,92 +121,51 @@ var Board = function() {
 	    DropHeight :  -1, 		 // the y position of the piece when it started dropping
 
         DrawTetrid : function (tetrid) {
+            for (var i = 0; i <= 3; i+=1) {
+                var BLOCK_SIZE = CONSTANTS.BLOCK_SIZE;
 
+                // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
+                // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
+                ctx.drawImage(cowMap,
+                    i * 20, // ROTATION FACTOR TO FOLLOW
+                    tetrid.Breed * 20,
+                    BLOCK_SIZE,
+                    BLOCK_SIZE,
+                    (tetrid.SqOffset[i].x + tetrid.Position.x) * BLOCK_SIZE,
+                    (tetrid.SqOffset[i].y + tetrid.Position.y) * BLOCK_SIZE,
+                    BLOCK_SIZE,
+                    BLOCK_SIZE
+                    );
+            }
         },
 	};
 };
 
-var Game = {
-	_board : 0,
+var Game = function() {
+    return {
+    	_board : 0,
 
-    Score : 0,   	// score
-    Rows : 0,    	// rows deleted
-    Level : 0,    	// current level
+        Score : 0,   	// score
+        Rows : 0,    	// rows deleted
+        Level : 0,    	// current level
 
-	GameInProgress : false, // whether a game is in progress
-	GamePaused : false,		// whether the game is paused (0 = not paused, >0 = paused
-	OldGamePaused : 0,		// the previous bGamePaused value
-	GameOver : false,		// whether a game has been played and ended (used in showing the "Game Over" indicator)
+    	GameInProgress : false, // whether a game is in progress
+    	GamePaused : false,		// whether the game is paused (0 = not paused, >0 = paused
+    	OldGamePaused : 0,		// the previous bGamePaused value
+    	GameOver : false,		// whether a game has been played and ended (used in showing the "Game Over" indicator)
 
-	Board : new Board(),
-	OldBoard : new Board()
+    	Board : new Board(),
+        OldBoard : new Board()
+    }
 };
 
 function init() {
-	// adjust canvas size
+    // ADJUST CANVAS SIZE
 	document.getElementById('canvas').width = CONSTANTS.NUM_COLS * CONSTANTS.BLOCK_SIZE;
 	document.getElementById('canvas').height = CONSTANTS.NUM_ROWS * CONSTANTS.BLOCK_SIZE;
 
-	var ctx = document.getElementById('canvas').getContext('2d');
+    var game = new Game()
+        , a_cow = new Tetrid(BREEDS.Hereford)
 
-	var cowMap = new Image ();
-
-    var a_cow = new Tetrid(BREEDS.Hereford);
-
-    console.log(a_cow);
-
-	cowMap.onload = function() {
-        for (var i = 0; i <= 3; i+=1) {
-            var BLOCK_SIZE = CONSTANTS.BLOCK_SIZE;
-
-            ctx.drawImage(cowMap,
-                i * 20, // ROTATION FACTOR TO FOLLOW
-                a_cow.Breed * 20,
-                BLOCK_SIZE,
-                BLOCK_SIZE,
-                (a_cow.SqOffset[i].x + a_cow.Position.x) * BLOCK_SIZE,
-                (a_cow.SqOffset[i].y + a_cow.Position.y) * BLOCK_SIZE,
-                BLOCK_SIZE,
-                BLOCK_SIZE
-                )
-        }
-
-		// prefixes: 's' is for 'source' and 'd' is for 'destination'
-		// drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-
-		// GUERNSEY
-		// * * * *
-
-		// ctx.drawImage(cowMap,  0, 0, 20, 20,  0, 0, 20, 20);
-		// ctx.drawImage(cowMap, 20, 0, 20, 20, 20, 0, 20, 20);
-		// ctx.drawImage(cowMap, 60, 0, 20, 20, 60, 0, 20, 20);
-		// ctx.drawImage(cowMap, 40, 0, 20, 20, 40, 0, 20, 20);
-
-		// HOLSTEIN-FRISEIAN
-		// * *
-		// * *
-
-		// ctx.drawImage(cowMap,  0, 120, 20, 20,  0, 40, 20, 20);
-		// ctx.drawImage(cowMap, 20, 120, 20, 20, 20, 40, 20, 20);
-		// ctx.drawImage(cowMap, 40, 120, 20, 20,  0, 60, 20, 20);
-		// ctx.drawImage(cowMap, 60, 120, 20, 20, 20, 60, 20, 20);
-
-		// AYRSHIRE
-		//     *
-		// * * *
-		// ctx.drawImage(cowMap,  0, 40, 20, 20, 40, 100, 20, 20);
-		// ctx.drawImage(cowMap, 20, 40, 20, 20,  0, 120, 20, 20);
-		// ctx.drawImage(cowMap, 40, 40, 20, 20,  20, 120, 20, 20);
-		// ctx.drawImage(cowMap, 60, 40, 20, 20,  40, 120, 20, 20);
-
-		// TEXAS LONGHORN
-
-		// ABERDEEN-ANGUS
-
-		// JERSEY
-
-		// HEREFORD
-
-	};
-	cowMap.src = './resources/images/source.png';
+    game.Board.DrawTetrid(a_cow);
 }
