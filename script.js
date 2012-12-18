@@ -450,7 +450,7 @@ function init() {
             case 37: // left
                 bottom.actionFigure.move(new Vector(-1, 0));
                 break;
-            case 39: // rigth
+            case 39: // right
                 bottom.actionFigure.move(new Vector(1, 0));
                 break;
             case 38: // up
