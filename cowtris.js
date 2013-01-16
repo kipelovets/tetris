@@ -3,11 +3,11 @@
 // The original game, and source, can be found at http://nonsense.wglick.org/cowtris.html
 
 var CONSTANTS = {
-	NUM_COLS : 10,
-	NUM_ROWS : 22,
-	NUM_BREEDS : 7,
-	BLOCK_SIZE : 20,
-	GAME_AREA_COLOR : '#D5CCBB'
+    NUM_COLS : 10,
+    NUM_ROWS : 22,
+    NUM_BREEDS : 7,
+    BLOCK_SIZE : 20,
+    GAME_AREA_COLOR : '#D5CCBB'
 }
 
 /*
@@ -18,59 +18,59 @@ the piece.
 */
 
 TetridDef = [
-	5,  1, -1,  0,  0,  0,  1,  0,  2,  0, // Guernsey
+    5,  1, -1,  0,  0,  0,  1,  0,  2,  0, // Guernsey
     5,  1, -1, -1, -1,  0,  0,  0,  1,  0, // AberdeenAngus
-	5,  1,  1, -1, -1,  0,  0,  0,  1,  0, // Ayrshire
-	5,  1, -1, -1,  0, -1,  0,  0,  1,  0, // Hereford
-	5,  1,  0, -1,  1, -1, -1,  0,  0,  0, // Jersey
-	5,  0, -1,  0,  0,  0,  1,  0,  0,  1, // TexasLonghorn
-	5,  1,  0, -1,  1, -1,  0,  0,  1,  0, // Holstein
-	5,  1,  0,  0,  0,  0,  0,  0,  0,  0, // MadCow
-	5,  1,  0,  0,  0,  0,  0,  0,  0,  0, // HolyCow
-	5,  1,  0,  0,  0,  0,  0,  0,  0,  0  // PurpleCow
-	];
+    5,  1,  1, -1, -1,  0,  0,  0,  1,  0, // Ayrshire
+    5,  1, -1, -1,  0, -1,  0,  0,  1,  0, // Hereford
+    5,  1,  0, -1,  1, -1, -1,  0,  0,  0, // Jersey
+    5,  0, -1,  0,  0,  0,  1,  0,  0,  1, // TexasLonghorn
+    5,  1,  0, -1,  1, -1,  0,  0,  1,  0, // Holstein
+    5,  1,  0,  0,  0,  0,  0,  0,  0,  0, // MadCow
+    5,  1,  0,  0,  0,  0,  0,  0,  0,  0, // HolyCow
+    5,  1,  0,  0,  0,  0,  0,  0,  0,  0  // PurpleCow
+    ];
 
 var ROTATION_NAMES = {
     RotNormal : 0,
-	RotRight : 1,
-	RotFlipped : 2,
-	RotLeft : 3
+    RotRight : 1,
+    RotFlipped : 2,
+    RotLeft : 3
 };
 
 var ROTATIONS = Object.keys(ROTATION_NAMES);
 
 var BREEDS = {
-	Guernsey : 0,
-	AberdeenAngus : 1,
-	Ayrshire : 2,
-	Hereford : 3,
-	Jersey : 4,
-	TexasLonghorn : 5,
-	Holstein : 6,
-	MadCow : 7,
-	HolyCow : 8,
-	PurpleCow : 9
+    Guernsey : 0,
+    AberdeenAngus : 1,
+    Ayrshire : 2,
+    Hereford : 3,
+    Jersey : 4,
+    TexasLonghorn : 5,
+    Holstein : 6,
+    MadCow : 7,
+    HolyCow : 8,
+    PurpleCow : 9
 };
 
 // these could be functions, but this is pretty quick
 var BREED_NAMES = Object.keys(BREEDS);
 
 var Point = function (x, y) {
-	return { x : x, y : y };
+    return { x : x, y : y };
 }
 
 var Tetrid = function (breed) {
-	return {
-        // "CENTER" OF TETRID
-	    Position : function() {
+    var rotation = ROTATION_NAMES.RotNormal
+        , breed = breed
+        , name = BREED_NAMES[breed]
+        , special = false
+        , position = function() {
             return new Point (
                 TetridDef[10 * breed],
                 TetridDef[10 * breed + 1]
                 )
-        }(),
-
-        // OFFSETS OF EACH BLOCK FROM CENTER
-	    SqOffset : function() {
+            }()
+        , offset = function() {
             var offsets = [];
 
             for (var i = 0; i <= 3; i+=1) {
@@ -81,14 +81,43 @@ var Tetrid = function (breed) {
             }
 
             return offsets;
-        }(),
+            }();
 
-        // PIECE'S CURRENT ROTATION
-	    Rotation : ROTATION_NAMES.RotNormal,
-	    Breed : breed,
-        Name : BREED_NAMES[breed],
-	    Special : false,
-	}
+    return {
+        get rotation () {
+            return rotation;
+        },
+        get breed () {
+            return breed;
+        },
+        get name () {
+            return name;
+        },
+        get special () {
+            return special;
+        },
+        get position () {
+            return position;
+        },
+        get offset () {
+            return offset;
+        },
+        rotate_right : function () {
+            rotation = (rotation + 1) % 4;
+        },
+        rotate_left : function () {
+            rotation = (rotation - 1) % 4;
+        },
+        move_right : function () {
+
+        },
+        move_left : function () {
+
+        },
+        advance : function () {
+
+        },
+    }
 };
 
 var Board = function() {
@@ -97,28 +126,28 @@ var Board = function() {
 
     cowMap.src = './resources/images/source.png';
 
-	return {
-		Square : function () {  // stores the contents of the board
-			if (!self._board) {
-				self._board = new Array();
-				for (var i = CONSTANTS.NUM_ROWS - 1; i >= 0; i--) {
-					self._board.push(function () {
-						row = [];
-						for (var x = CONSTANTS.NUM_COLS - 1; x >= 0; x--) {
-							row.push(0);
-						}
-						return row;
-					}());
-				};
-			}
+    return {
+        Square : function () {  // stores the contents of the board
+            if (!self._board) {
+                self._board = new Array();
+                for (var i = CONSTANTS.NUM_ROWS - 1; i >= 0; i--) {
+                    self._board.push(function () {
+                        row = [];
+                        for (var x = CONSTANTS.NUM_COLS - 1; x >= 0; x--) {
+                            row.push(0);
+                        }
+                        return row;
+                    }());
+                };
+            }
 
-			return self._board;
-		},
+            return self._board;
+        },
 
-	  	CurPiece : new Tetrid(), // the current falling tetrid
-	    NextBreed :  -1,		 // the breed of the next tetrid (used in displaying the Next Piece indicator)
-	    Dropping :  false,     	 // whether the current piece is Dropping quickly
-	    DropHeight :  -1, 		 // the y position of the piece when it started dropping
+        CurPiece : new Tetrid(), // the current falling tetrid
+        NextBreed :  -1,         // the breed of the next tetrid (used in displaying the Next Piece indicator)
+        Dropping :  false,       // whether the current piece is Dropping quickly
+        DropHeight :  -1,        // the y position of the piece when it started dropping
 
         DrawTetrid : function (tetrid) {
             for (var i = 0; i <= 3; i+=1) {
@@ -127,45 +156,46 @@ var Board = function() {
                 // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
                 // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
                 ctx.drawImage(cowMap,
-                    i * 20, // ROTATION FACTOR TO FOLLOW
-                    tetrid.Breed * 20,
+                    (i + 4 * tetrid.rotation) * BLOCK_SIZE, // ROTATION FACTOR TO FOLLOW
+                    tetrid.breed * BLOCK_SIZE,
                     BLOCK_SIZE,
                     BLOCK_SIZE,
-                    (tetrid.SqOffset[i].x + tetrid.Position.x) * BLOCK_SIZE,
-                    (tetrid.SqOffset[i].y + tetrid.Position.y) * BLOCK_SIZE,
+                    (tetrid.offset[i].x + tetrid.position.x) * BLOCK_SIZE,
+                    (tetrid.offset[i].y + tetrid.position.y) * BLOCK_SIZE,
                     BLOCK_SIZE,
                     BLOCK_SIZE
                     );
             }
         },
-	};
+    };
 };
 
 var Game = function() {
     return {
-    	_board : 0,
+        _board : 0,
 
-        Score : 0,   	// score
-        Rows : 0,    	// rows deleted
-        Level : 0,    	// current level
+        Score : 0,      // score
+        Rows : 0,       // rows deleted
+        Level : 0,      // current level
 
-    	GameInProgress : false, // whether a game is in progress
-    	GamePaused : false,		// whether the game is paused (0 = not paused, >0 = paused
-    	OldGamePaused : 0,		// the previous bGamePaused value
-    	GameOver : false,		// whether a game has been played and ended (used in showing the "Game Over" indicator)
+        GameInProgress : false, // whether a game is in progress
+        GamePaused : false,     // whether the game is paused (0 = not paused, >0 = paused
+        OldGamePaused : 0,      // the previous bGamePaused value
+        GameOver : false,       // whether a game has been played and ended (used in showing the "Game Over" indicator)
 
-    	Board : new Board(),
+        Board : new Board(),
         OldBoard : new Board()
     }
 };
 
 function init() {
-    // ADJUST CANVAS SIZE
-	document.getElementById('canvas').width = CONSTANTS.NUM_COLS * CONSTANTS.BLOCK_SIZE;
-	document.getElementById('canvas').height = CONSTANTS.NUM_ROWS * CONSTANTS.BLOCK_SIZE;
+    var game = new Game(), a_cow = new Tetrid(BREEDS.Ayrshire);
 
-    var game = new Game()
-        , a_cow = new Tetrid(BREEDS.Hereford)
+    // ADJUST CANVAS SIZE
+    document.getElementById('canvas').width = CONSTANTS.NUM_COLS * CONSTANTS.BLOCK_SIZE;
+    document.getElementById('canvas').height = CONSTANTS.NUM_ROWS * CONSTANTS.BLOCK_SIZE;
+
+    // a_cow.rotate_right();
 
     game.Board.DrawTetrid(a_cow);
 }
