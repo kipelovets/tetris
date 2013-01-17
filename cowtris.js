@@ -81,7 +81,15 @@ var Tetrid = function (breed) {
             }
 
             return offsets;
-            }();
+            }()
+        , setRotation = function() {
+            for (var i = 0; i <= 3; i+=1) {
+                var x = offset[i].x, y = offset[i].y;
+
+                offset[i].x = -y;
+                offset[i].y = x;
+            }
+        };
 
     return {
         get rotation () {
@@ -104,9 +112,11 @@ var Tetrid = function (breed) {
         },
         rotate_right : function () {
             rotation = (rotation + 1) % 4;
+            setRotation();
         },
         rotate_left : function () {
             rotation = (rotation - 1) % 4;
+            setRotation();
         },
         move_right : function () {
 
@@ -165,6 +175,7 @@ var Board = function() {
                     BLOCK_SIZE,
                     BLOCK_SIZE
                     );
+                console.log();
             }
         },
     };
@@ -195,7 +206,7 @@ function init() {
     document.getElementById('canvas').width = CONSTANTS.NUM_COLS * CONSTANTS.BLOCK_SIZE;
     document.getElementById('canvas').height = CONSTANTS.NUM_ROWS * CONSTANTS.BLOCK_SIZE;
 
-    // a_cow.rotate_right();
+    a_cow.rotate_right();
 
     game.Board.DrawTetrid(a_cow);
 }
