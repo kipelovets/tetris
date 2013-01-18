@@ -9,7 +9,7 @@ var CONSTANTS = {
     num_cols: 10,
     num_rows: 22,
     block_size: 20,
-    game_area_color: '#D5CCBB'
+    game_area_color: 'rgb(213, 204, 187)'
     };
 
 /*
@@ -104,7 +104,7 @@ var Cow = function(breed) {
             else if ( 0 > val || val > 3 )
                 throw new RangeError();
             else
-                return this._rotation = val;
+                return _rotation = val;
         },
         get rotation() {
             return _rotation;
@@ -130,12 +130,8 @@ var Cow = function(breed) {
             });
         },
 
-        rotate_right: function () {
-            this.rotation = (rotation + 1) % 4;
-            _setRotation();
-        },
-        rotate_left: function () {
-            this.rotation = (rotation - 1) % 4;
+        rotate: function () {
+            this.rotation = (this.rotation + 1) % 4;
             _setRotation();
         },
         move_right: function () {
@@ -171,6 +167,9 @@ var Board = function () {
 
     _cowMap.src = './resources/images/source.png';
 
+    _ctx.fillStyle = CONSTANTS.game_area_color;
+    _ctx.fillRect(0, 0, CONSTANTS.block_size * CONSTANTS.num_cols, CONSTANTS.block_size * CONSTANTS.num_rows);
+
     return {
         drawCow: function(cow) {
             var i;
@@ -193,7 +192,7 @@ var Board = function () {
 
         eraseCow: function(cow) {
             cow.positions.forEach(function(p) {
-                _ctx.fillStyle = "rgb(255,255,255)";
+                _ctx.fillStyle = CONSTANTS.game_area_color;
                 _ctx.fillRect(
                     p.x * CONSTANTS.block_size,
                     p.y * CONSTANTS.block_size,
@@ -237,38 +236,84 @@ var Board = function () {
 };
 
 var Game = function () {
-    var interval = 200,
-        intervalID,
-        piece = new Cow(Math.floor(Math.random() * 7)),
-        gameInProgress = false,
-        gamePaused = false,
-        gameOver = false,
-        score = 0,
-        rows = 0,
-        level = 0
-        board = new Board(),
-        oldBoard = new Board();
+    var _interval = 200,
+        _intervalID,
+        _piece = new Cow(Math.floor(Math.random() * 7)),
+        _gameInProgress = false,
+        _gamePaused = false,
+        _gameOver = false,
+        _score = 0,
+        _rows = 0,
+        _level = 0
+        _board = new Board(),
+        _oldBoard = new Board();
 
     return {
         start: function () {
-            GameInProgress = true;
-            board.drawCow(piece);
-            intervalID = setInterval(this.advanceCurrentPiece, interval);
+            _gameInProgress = true;
+            _board.drawCow(_piece);
+            _intervalID = setInterval(this.advancePiece, _interval);
         },
 
-        advanceCurrentPiece: function () {
-            var provisional = piece.clone();
+        advancePiece: function () {
+            var provisional = _piece.clone();
             provisional.advance();
 
-            if ( this.board.isConflicted(provisional) ) {
-                this.board.addToBoard(piece);
-                piece = new Cow(Math.floor(Math.random() * 7));
+            if ( _board.isConflicted(provisional) ) {
+                _board.addToBoard(_piece);
+                _piece = new Cow(Math.floor(Math.random() * 7));
             } else {
-                this.board.eraseCow(piece)
-                piece.advance();
-                this.board.drawCow(piece);
+                _board.eraseCow(_piece)
+                _piece.advance();
+                _board.drawCow(_piece);
             }
         },
+
+        movePieceRight: function () {
+            var provisional = _piece.clone();
+            provisional.move_right();
+
+            if ( _board.isConflicted(provisional) ) {
+                _board.addToBoard(_piece);
+                _piece = new Cow(Math.floor(Math.random() * 7));
+            } else {
+                _board.eraseCow(_piece)
+                _piece.move_right();
+                _board.drawCow(_piece);
+            }
+        },
+
+        movePieceLeft: function () {
+            var provisional = _piece.clone();
+            provisional.move_left();
+
+            if ( _board.isConflicted(provisional) ) {
+                _board.addToBoard(_piece);
+                _piece = new Cow(Math.floor(Math.random() * 7));
+            } else {
+                _board.eraseCow(_piece)
+                _piece.move_left();
+                _board.drawCow(_piece);
+            }
+        },
+
+        dropPiece: function () {
+
+        },
+
+        rotatePiece: function () {
+            var provisional = _piece.clone();
+            provisional.rotate();
+
+            if ( _board.isConflicted(provisional) ) {
+                _board.addToBoard(_piece);
+                _piece = new Cow(Math.floor(Math.random() * 7));
+            } else {
+                _board.eraseCow(_piece)
+                _piece.rotate();
+                _board.drawCow(_piece);
+            }
+        }
     }
 };
 
@@ -278,5 +323,26 @@ function init() {
     document.getElementById('canvas').height = CONSTANTS.num_rows * CONSTANTS.block_size;
 
     var game = new Game();
+
+    window.onkeydown = function (e) {
+        switch(e.keyCode) {
+            case 32: // space
+                game.dropPiece();
+                break;
+            case 37: // left
+                game.movePieceLeft();
+                break;
+            case 38:
+                game.rotatePiece();
+                break;            
+            case 39: // right
+                game.movePieceRight();
+                break;
+            case 40: // down
+                game.advancePiece();
+                break;
+        }      
+    };
+
     game.start();
 }
