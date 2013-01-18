@@ -1,15 +1,16 @@
+/*jslint white: true */
+
 // Copyright 2012-2013 by Ben Jacobs <benmillerj@gmail.com>; released under
 // the terms of the GNU Public License. Based on concept/code (copyright
 // 2000-2003 under the terms of the GPL) by David Glick <dglick@gmail.com> The
 // original game, and source, can be found at
 // http://nonsense.wglick.org/cowtris.html
 var CONSTANTS = {
-    NUM_COLS: 10,
-    NUM_ROWS: 22,
-    NUM_BREEDS: 7,
-    BLOCK_SIZE: 20,
-    GAME_AREA_COLOR: '#D5CCBB'
-}
+    num_cols: 10,
+    num_rows: 22,
+    block_size: 20,
+    game_area_color: '#D5CCBB'
+    };
 
 /*
 Here the pieces are defined, one line per piece. The first 2 values in each
@@ -18,25 +19,30 @@ The other 4 pairs give the x- and y-offsets of each block from the center of
 the piece.
 */
 
-CowDef = [
-5, 1, -1, 0, 0, 0, 1, 0, 2, 0, // Guernsey
-5, 1, -1, -1, -1, 0, 0, 0, 1, 0, // AberdeenAngus
-5, 1, 1, -1, -1, 0, 0, 0, 1, 0, // Ayrshire
-5, 1, -1, -1, 0, -1, 0, 0, 1, 0, // Hereford
-5, 1, 0, -1, 1, -1, -1, 0, 0, 0, // Jersey
-5, 0, -1, 0, 0, 0, 1, 0, 0, 1, // TexasLonghorn
-5, 1, 0, -1, 1, -1, 0, 0, 1, 0, // Holstein
-5, 1, 0, 0, 0, 0, 0, 0, 0, 0, // MadCow
-5, 1, 0, 0, 0, 0, 0, 0, 0, 0, // HolyCow
-5, 1, 0, 0, 0, 0, 0, 0, 0, 0 // PurpleCow
-];
+var _NormalCowDef = [
+    5, 1, -1, 0, 0, 0, 1, 0, 2, 0, // Guernsey
+    5, 1, -1, -1, -1, 0, 0, 0, 1, 0, // AberdeenAngus
+    5, 1, 1, -1, -1, 0, 0, 0, 1, 0, // Ayrshire
+    5, 1, -1, -1, 0, -1, 0, 0, 1, 0, // Hereford
+    5, 1, 0, -1, 1, -1, -1, 0, 0, 0, // Jersey
+    5, 0, -1, 0, 0, 0, 1, 0, 0, 1, // TexasLonghorn
+    5, 1, 0, -1, 1, -1, 0, 0, 1, 0, // Holstein
+    ];
+
+var _SpecialCowDef = [
+    5, 1, 0, 0, 0, 0, 0, 0, 0, 0, // MadCow
+    5, 1, 0, 0, 0, 0, 0, 0, 0, 0, // HolyCow
+    5, 1, 0, 0, 0, 0, 0, 0, 0, 0 // PurpleCow
+    ];
+
+var CowDef = _NormalCowDef;
 
 var ROTATION_NAMES = {
     RotNormal: 0,
     RotRight: 1,
     RotFlipped: 2,
     RotLeft: 3
-};
+    };
 
 var ROTATIONS = Object.keys(ROTATION_NAMES);
 
@@ -51,166 +57,225 @@ var BREEDS = {
     MadCow: 7,
     HolyCow: 8,
     PurpleCow: 9
-};
+    };
 
 // these could be functions, but this is pretty quick
 var BREED_NAMES = Object.keys(BREEDS);
 
-var Point = function(x, y) {
-        return {
-            x: x,
-            y: y
-        };
-    };
+var Point = function (x, y) {
+    return { 'x': x, 'y': y };
+};
 
 var Cow = function(breed) {
-        var rotation = ROTATION_NAMES.RotNormal,
-            breed = breed,
-            name = BREED_NAMES[breed],
-            special = false,
-            position = function() {
-                return new Point(
-                CowDef[10 * breed], CowDef[10 * breed + 1])
-            }(),
-            offset = function() {
-                var offsets = [];
+    // 'private variables'
+    var _rotation = ROTATION_NAMES.RotNormal,
+        _breed = breed,
+        _name = BREED_NAMES[breed],
+        _special = false,
+        _center = (function () {
+            return new Point(CowDef[10 * breed], CowDef[10 * breed + 1]);
+        }()),
+        _offsets = (function () {
+            var offsets = [], i;
 
-                for(var i = 0; i <= 3; i += 1) {
-                    offsets.push(new Point(
-                    CowDef[10 * breed + 2 + 2 * i], CowDef[10 * breed + 3 + 2 * i]));
-                }
+            for(i = 0; i <= 3; i += 1) {
+                offsets.push(new Point(
+                CowDef[10 * breed + 2 + 2 * i], CowDef[10 * breed + 3 + 2 * i]));
+            }
 
-                return offsets;
-            }(),
-            setRotation = function() {
-                for(var i = 0; i <= 3; i += 1) {
-                    var x = offset[i].x,
-                        y = offset[i].y;
+            return offsets;
+        }());
 
-                    offset[i].x = -y;
-                    offset[i].y = x;
-                }
-            };
+    var _setRotation = function () {
+        var i;
 
-        return {
-            get rotation() {
-                return rotation;
-            }, get breed() {
-                return breed;
-            }, get name() {
-                return name;
-            }, get special() {
-                return special;
-            }, get position() {
-                return position;
-            }, get offset() {
-                return offset;
-            }, rotate_right: function() {
-                rotation = (rotation + 1) % 4;
-                setRotation();
-            },
-            rotate_left: function() {
-                rotation = (rotation - 1) % 4;
-                setRotation();
-            },
-            move_right: function() {
-                position.x += 1;
-            },
-            move_left: function() {
-                position.x += 1;
-            },
-            advance: function() {
-                position.y += 1;
-            },
+        for (i = 0; i <= 3; i+=1) {
+            var x = _offsets[i].x, y = _offsets[i].y;
+
+            _offsets[i].x = -y;
+            _offsets[i].y = x;
         }
     };
 
-var Board = function() {
-        var ctx = document.getElementById('canvas').getContext('2d'),
-            cowMap = new Image(),
-            Dropping = false,
-            DropHeight = -1,
-            board = function() {
-                var empty_board = [];
-                for(var i = CONSTANTS.NUM_ROWS - 1; i >= 0; i--) {
-                    empty_board.push(Array.apply(null, new Array(5)).map(Number.prototype.valueOf, 0))
-                }
-                return empty_board;
-            }();
+    return {
+        set rotation(val) {
+            if (typeof val !== 'number')
+                throw new TypeError();
+            else if ( 0 > val || val > 3 )
+                throw new RangeError();
+            else
+                return this._rotation = val;
+        },
+        get rotation() {
+            return _rotation;
+        },
+        get breed() {
+            return _breed;
+        },
+        get name() {
+            return _name;
+        },
+        get special() {
+            return _special;
+        },
+        get center() {
+            return _center;
+        },
+        set center(val) {
+            _center = val;
+        },
+        get positions() {
+            return _offsets.map(function(p) {
+                return new Point(p.x + _center.x, p.y + _center.y);
+            });
+        },
 
-        cowMap.src = './resources/images/source.png';
+        rotate_right: function () {
+            this.rotation = (rotation + 1) % 4;
+            _setRotation();
+        },
+        rotate_left: function () {
+            this.rotation = (rotation - 1) % 4;
+            _setRotation();
+        },
+        move_right: function () {
+            this.center = new Point(this.center.x + 1, this.center.y);
+        },
+        move_left: function () {
+            this.center = new Point(this.center.x - 1, this.center.y);
+        },
+        advance: function () {
+            this.center = new Point(this.center.x, this.center.y + 1);
+        },
+        clone: function () {
+            var cow = new Cow(this.breed);
+            cow.rotation = this.rotation;
+            cow.center = this.center;
+            return cow;
+        }
+    }
+};
 
-        return {
-            drawCow: function(cow) {
-                for(var i = 0; i <= 3; i += 1) {
-                    var BLOCK_SIZE = CONSTANTS.BLOCK_SIZE;
-
-                    // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
-                    // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
-                    ctx.drawImage(cowMap,
-                        (i + 4 * cow.rotation) * BLOCK_SIZE,
-                        cow.breed * BLOCK_SIZE,
-                        BLOCK_SIZE,
-                        BLOCK_SIZE,
-                        (cow.offset[i].x + cow.position.x) * BLOCK_SIZE,
-                        (cow.offset[i].y + cow.position.y) * BLOCK_SIZE,
-                        BLOCK_SIZE,
-                        BLOCK_SIZE);
-                }
-            },
-
-            eraseCow: function(cow) {
-                for(var i = 0; i <= 3; i += 1) {
-                    var BLOCK_SIZE = CONSTANTS.BLOCK_SIZE;
-
-                    ctx.fillStyle = "rgb(255,255,255)";
-                    // fillRect(x, y, width, height)
-                    ctx.fillRect(
-                        (cow.offset[i].x + cow.position.x) * BLOCK_SIZE,
-                        (cow.offset[i].y + cow.position.y) * BLOCK_SIZE,
-                        BLOCK_SIZE,
-                        BLOCK_SIZE);
-                }
+var Board = function () {
+    var _ctx = document.getElementById('canvas').getContext('2d'),
+        _cowMap = new Image(),
+        _dropping = false,
+        _dropHeight = -1,
+        _board = (function () {
+            var empty_board = [], i;
+            for(i = 0; i < CONSTANTS.num_cols; i++) {
+                empty_board.push(Array.apply(null, new Array(CONSTANTS.num_rows)).map(Number.prototype.valueOf, 0))
             }
-        };
+            return empty_board;
+        }());
+
+    _cowMap.src = './resources/images/source.png';
+
+    return {
+        drawCow: function(cow) {
+            var i;
+            for (i = 0; i < cow.positions.length; i++) {
+                var block_size = CONSTANTS.block_size, point = cow.positions[i];
+
+                // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
+                // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
+                _ctx.drawImage(_cowMap,
+                    (i + 4 * cow.rotation) * block_size,
+                    cow.breed * block_size,
+                    block_size,
+                    block_size,
+                    point.x * block_size,
+                    point.y * block_size,
+                    block_size,
+                    block_size);
+            }
+        },
+
+        eraseCow: function(cow) {
+            cow.positions.forEach(function(p) {
+                _ctx.fillStyle = "rgb(255,255,255)";
+                _ctx.fillRect(
+                    p.x * CONSTANTS.block_size,
+                    p.y * CONSTANTS.block_size,
+                    CONSTANTS.block_size,
+                    CONSTANTS.block_size);
+            });
+        },
+
+        isConflicted: function(cow) {
+            var isConflicted = false;
+            
+            cow.positions.forEach(function(p) {
+                if (p.x >= CONSTANTS.num_cols || p.x < 0) {
+                    isConflicted = true;
+                }
+                if (p.y >= CONSTANTS.num_rows) {
+                    isConflicted = true;
+                }
+                if (_board[p.x][p.y] === 1) {
+                    isConflicted = true;
+                }
+            });
+
+            return isConflicted;
+        },
+
+        addToBoard: function(cow) {
+            cow.positions.forEach(function (p) {
+                _board[p.x][p.y] = 1;
+            });
+        },
+
+        logBoard: function() {
+            return _board.map(function(row) {
+                return row.map(function(point) {
+                    return String(point);
+                });
+            }).join('\n');
+        }
     };
+};
 
-var Game = function() {
-        var interval = 1000,
-            intervalID, piece = new Cow(Math.floor(Math.random() * 7)),
-            gameInProgress = false,
-            gamePaused = false,
-            gameOver = false,
-            score = 0,
-            rows = 0,
-            level = 0
-            board = new Board(),
-            oldBoard = new Board();
+var Game = function () {
+    var interval = 200,
+        intervalID,
+        piece = new Cow(Math.floor(Math.random() * 7)),
+        gameInProgress = false,
+        gamePaused = false,
+        gameOver = false,
+        score = 0,
+        rows = 0,
+        level = 0
+        board = new Board(),
+        oldBoard = new Board();
 
-        return {
-            start: function() {
-                GameInProgress = true;
-                board.drawCow(piece);
-                intervalID = setInterval(this.advanceCurrentPiece, interval);
-            },
+    return {
+        start: function () {
+            GameInProgress = true;
+            board.drawCow(piece);
+            intervalID = setInterval(this.advanceCurrentPiece, interval);
+        },
 
-            advanceCurrentPiece: function() {
-                var provisionalPiece = clone(piece);
+        advanceCurrentPiece: function () {
+            var provisional = piece.clone();
+            provisional.advance();
+
+            if ( this.board.isConflicted(provisional) ) {
+                this.board.addToBoard(piece);
+                piece = new Cow(Math.floor(Math.random() * 7));
+            } else {
                 this.board.eraseCow(piece)
                 piece.advance();
                 this.board.drawCow(piece);
-            },
-
-            createNewPiece: function() {
-                return new Cow(Math.floor(Math.random() * 7));
             }
-        }
-    };
+        },
+    }
+};
 
 function init() {
     // ADJUST CANVAS SIZE
-    document.getElementById('canvas').width = CONSTANTS.NUM_COLS * CONSTANTS.BLOCK_SIZE;
-    document.getElementById('canvas').height = CONSTANTS.NUM_ROWS * CONSTANTS.BLOCK_SIZE;
+    document.getElementById('canvas').width = CONSTANTS.num_cols * CONSTANTS.block_size;
+    document.getElementById('canvas').height = CONSTANTS.num_rows * CONSTANTS.block_size;
 
     var game = new Game();
     game.start();
