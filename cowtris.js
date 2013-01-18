@@ -207,11 +207,9 @@ var Board = function () {
             cow.positions.forEach(function(p) {
                 if (p.x >= CONSTANTS.num_cols || p.x < 0) {
                     isConflicted = true;
-                }
-                if (p.y >= CONSTANTS.num_rows) {
+                } else if (p.y >= CONSTANTS.num_rows) {
                     isConflicted = true;
-                }
-                if (_board[p.x][p.y] === 1) {
+                } else if (_board[p.x][p.y] === 1) {
                     isConflicted = true;
                 }
             });
@@ -249,51 +247,74 @@ var Game = function () {
         _oldBoard = new Board();
 
     return {
+        get piece () {
+            return _piece;
+        },
+        set piece (val) {
+            return _piece = val;
+        },
+        get board () {
+            return _board;
+        },
+        get interval () {
+            return _interval;
+        },
+        get intervalID () {
+            return _intervalID;
+        },
+        set intervalID (val) {
+            return _intervalID = val;
+        },
+        get gameInProgress () {
+            return _gameInProgress;
+        },
+        set gameInProgress (val) {
+            return _gameInProgress = val;
+        },
+
         start: function () {
-            _gameInProgress = true;
-            _board.drawCow(_piece);
-            _intervalID = setInterval(this.advancePiece, _interval);
+            this.gameInProgress = true;
+            this.board.drawCow(this.piece);
+            this.intervalID = setInterval( (function(self) { 
+                return function () { 
+                    self.advancePiece(); 
+                } 
+            })(this), this.interval);
         },
 
         advancePiece: function () {
-            var provisional = _piece.clone();
+            var provisional = this.piece.clone();
             provisional.advance();
 
-            if ( _board.isConflicted(provisional) ) {
-                _board.addToBoard(_piece);
-                _piece = new Cow(Math.floor(Math.random() * 7));
+            if ( this.board.isConflicted(provisional) ) {
+                this.board.addToBoard(this.piece);
+                this.piece = new Cow(Math.floor(Math.random() * 7));
             } else {
-                _board.eraseCow(_piece)
-                _piece.advance();
-                _board.drawCow(_piece);
+                this.board.eraseCow(this.piece)
+                this.piece.advance();
+                this.board.drawCow(this.piece);
             }
         },
 
         movePieceRight: function () {
-            var provisional = _piece.clone();
+            var provisional = this.piece.clone();
             provisional.move_right();
 
-            if ( _board.isConflicted(provisional) ) {
-                _board.addToBoard(_piece);
-                _piece = new Cow(Math.floor(Math.random() * 7));
-            } else {
-                _board.eraseCow(_piece)
-                _piece.move_right();
-                _board.drawCow(_piece);
+            if ( !this.board.isConflicted(provisional) ) {
+                this.board.eraseCow(this.piece)
+                this.piece.move_right();
+                this.board.drawCow(this.piece);
             }
         },
 
         movePieceLeft: function () {
-            var provisional = _piece.clone();
+            var provisional = this.piece.clone();
             provisional.move_left();
 
-            if ( _board.isConflicted(provisional) ) {
-                _board.addToBoard(_piece);
-                _piece = new Cow(Math.floor(Math.random() * 7));
-            } else {
-                _board.eraseCow(_piece)
-                _piece.move_left();
-                _board.drawCow(_piece);
+            if ( !this.board.isConflicted(provisional) ) {
+                this.board.eraseCow(this.piece)
+                this.piece.move_left();
+                this.board.drawCow(this.piece);
             }
         },
 
@@ -302,16 +323,16 @@ var Game = function () {
         },
 
         rotatePiece: function () {
-            var provisional = _piece.clone();
+            var provisional = this.piece.clone();
             provisional.rotate();
 
-            if ( _board.isConflicted(provisional) ) {
-                _board.addToBoard(_piece);
-                _piece = new Cow(Math.floor(Math.random() * 7));
+            if ( this.board.isConflicted(provisional) ) {
+                this.board.addToBoard(this.piece);
+                this.piece = new Cow(Math.floor(Math.random() * 7));
             } else {
-                _board.eraseCow(_piece)
-                _piece.rotate();
-                _board.drawCow(_piece);
+                this.board.eraseCow(this.piece)
+                this.piece.rotate();
+                this.board.drawCow(this.piece);
             }
         }
     }
