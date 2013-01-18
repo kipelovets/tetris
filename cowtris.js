@@ -99,12 +99,15 @@ var Cow = function(breed) {
 
     return {
         set rotation(val) {
-            if (typeof val !== 'number')
+            if (typeof val !== 'number') {
                 throw new TypeError();
-            else if ( 0 > val || val > 3 )
+            } else if ( 0 > val || val > 3 ) {
                 throw new RangeError();
-            else
-                return _rotation = val;
+            } else {
+                _rotation = val;
+                _setRotation();
+                return _rotation;
+            }
         },
         get rotation() {
             return _rotation;
@@ -132,7 +135,6 @@ var Cow = function(breed) {
 
         rotate: function () {
             this.rotation = (this.rotation + 1) % 4;
-            _setRotation();
         },
         move_right: function () {
             this.center = new Point(this.center.x + 1, this.center.y);
@@ -145,8 +147,8 @@ var Cow = function(breed) {
         },
         clone: function () {
             var cow = new Cow(this.breed);
-            cow.rotation = this.rotation;
             cow.center = this.center;
+            cow.rotation = this.rotation;
             return cow;
         }
     }
@@ -213,6 +215,9 @@ var Board = function () {
                     isConflicted = true;
                 }
             });
+
+            if (isConflicted)
+                console.log('conflict detected');
 
             return isConflicted;
         },
