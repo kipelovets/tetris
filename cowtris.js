@@ -17,7 +17,7 @@ The other 4 pairs give the x- and y-offsets of each block from the center of
 the piece.
 */
 
-TetridDef = [
+CowDef = [
     5,  1, -1,  0,  0,  0,  1,  0,  2,  0, // Guernsey
     5,  1, -1, -1, -1,  0,  0,  0,  1,  0, // AberdeenAngus
     5,  1,  1, -1, -1,  0,  0,  0,  1,  0, // Ayrshire
@@ -59,15 +59,15 @@ var Point = function (x, y) {
     return { x : x, y : y };
 }
 
-var Tetrid = function (breed) {
+var Cow = function (breed) {
     var rotation = ROTATION_NAMES.RotNormal
         , breed = breed
         , name = BREED_NAMES[breed]
         , special = false
         , position = function() {
             return new Point (
-                TetridDef[10 * breed],
-                TetridDef[10 * breed + 1]
+                CowDef[10 * breed],
+                CowDef[10 * breed + 1]
                 )
             }()
         , offset = function() {
@@ -75,8 +75,8 @@ var Tetrid = function (breed) {
 
             for (var i = 0; i <= 3; i+=1) {
                 offsets.push(new Point(
-                    TetridDef[10 * breed + 2 + 2 * i],
-                    TetridDef[10 * breed + 3 + 2 * i]
+                    CowDef[10 * breed + 2 + 2 * i],
+                    CowDef[10 * breed + 3 + 2 * i]
                     ));
             }
 
@@ -87,8 +87,7 @@ var Tetrid = function (breed) {
                 var x = offset[i].x, y = offset[i].y;
 
                 offset[i].x = -y;
-                offset[i].y = x;
-            }
+                offset[i].y = x;            }
         };
 
     return {
@@ -119,94 +118,93 @@ var Tetrid = function (breed) {
             setRotation();
         },
         move_right : function () {
-
+            position.x += 1;
         },
         move_left : function () {
-
+            position.x += 1;
         },
         advance : function () {
-
+            position.y += 1;
         },
     }
 };
 
 var Board = function() {
-    var ctx = document.getElementById('canvas').getContext('2d')
-        , cowMap = new Image();
+    var ctx = document.getElementById('canvas').getContext('2d'),
+        cowMap = new Image(),
+        Dropping = false,
+        DropHeight = -1,
+        board = function () {
+            var empty_board = [];
+            for (var i = CONSTANTS.NUM_ROWS - 1; i >= 0; i--) {
+                empty_board.push(Array.apply(null, new Array(5)).map(Number.prototype.valueOf,0))
+            }
+            return empty_board;
+        }();
 
     cowMap.src = './resources/images/source.png';
 
     return {
-        Square : function () {  // stores the contents of the board
-            if (!self._board) {
-                self._board = new Array();
-                for (var i = CONSTANTS.NUM_ROWS - 1; i >= 0; i--) {
-                    self._board.push(function () {
-                        row = [];
-                        for (var x = CONSTANTS.NUM_COLS - 1; x >= 0; x--) {
-                            row.push(0);
-                        }
-                        return row;
-                    }());
-                };
-            }
-
-            return self._board;
-        },
-
-        CurPiece : new Tetrid(), // the current falling tetrid
-        NextBreed :  -1,         // the breed of the next tetrid (used in displaying the Next Piece indicator)
-        Dropping :  false,       // whether the current piece is Dropping quickly
-        DropHeight :  -1,        // the y position of the piece when it started dropping
-
-        DrawTetrid : function (tetrid) {
+        DrawCow : function (cow) {
             for (var i = 0; i <= 3; i+=1) {
                 var BLOCK_SIZE = CONSTANTS.BLOCK_SIZE;
 
                 // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
                 // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
                 ctx.drawImage(cowMap,
-                    (i + 4 * tetrid.rotation) * BLOCK_SIZE, // ROTATION FACTOR TO FOLLOW
-                    tetrid.breed * BLOCK_SIZE,
+                    (i + 4 * cow.rotation) * BLOCK_SIZE, // ROTATION FACTOR TO FOLLOW
+                    cow.breed * BLOCK_SIZE,
                     BLOCK_SIZE,
                     BLOCK_SIZE,
-                    (tetrid.offset[i].x + tetrid.position.x) * BLOCK_SIZE,
-                    (tetrid.offset[i].y + tetrid.position.y) * BLOCK_SIZE,
+                    (cow.offset[i].x + cow.position.x) * BLOCK_SIZE,
+                    (cow.offset[i].y + cow.position.y) * BLOCK_SIZE,
                     BLOCK_SIZE,
                     BLOCK_SIZE
                     );
                 console.log();
             }
-        },
+        }
     };
 };
 
 var Game = function() {
+    var interval = 1000, 
+        intervalID, 
+        piece = new Cow(Math.floor(Math.random()*7)),
+        gameInProgress = false,
+        gamePaused = false,
+        gameOver = false,
+        score = 0,
+        rows = 0,
+        level = 0
+        board = new Board(),
+        oldBoard = new Board();
+
     return {
-        _board : 0,
 
-        Score : 0,      // score
-        Rows : 0,       // rows deleted
-        Level : 0,      // current level
+        start : function () {
+            GameInProgress = true;
+            board.DrawCow(piece);
+            intervalID = setInterval(this.advanceCurrentPiece, interval);
+        },
 
-        GameInProgress : false, // whether a game is in progress
-        GamePaused : false,     // whether the game is paused (0 = not paused, >0 = paused
-        OldGamePaused : 0,      // the previous bGamePaused value
-        GameOver : false,       // whether a game has been played and ended (used in showing the "Game Over" indicator)
+        advanceCurrentPiece : function () {
+            var provisionalPiece = clone(piece);
+            piece.advance();
+            this.board.DrawCow(piece);
+        },
 
-        Board : new Board(),
-        OldBoard : new Board()
+        createNewPiece : function () {
+            return new Cow(Math.floor(Math.random()*7));
+        }
     }
 };
 
 function init() {
-    var game = new Game(), a_cow = new Tetrid(BREEDS.Ayrshire);
-
     // ADJUST CANVAS SIZE
     document.getElementById('canvas').width = CONSTANTS.NUM_COLS * CONSTANTS.BLOCK_SIZE;
     document.getElementById('canvas').height = CONSTANTS.NUM_ROWS * CONSTANTS.BLOCK_SIZE;
 
-    a_cow.rotate_right();
-
-    game.Board.DrawTetrid(a_cow);
+    var game = new Game();
+    game.start();
 }
