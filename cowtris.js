@@ -105,7 +105,6 @@ var Cow = function(breed) {
                 throw new RangeError();
             } else {
                 _rotation = val;
-                _setRotation();
                 return _rotation;
             }
         },
@@ -132,9 +131,19 @@ var Cow = function(breed) {
                 return new Point(p.x + _center.x, p.y + _center.y);
             });
         },
+        set offsets(val) {
+            _offsets = [];
+            val.forEach(function(p) {
+                _offsets.push(new Point(p.x, p.y));
+            });
+        },
+        get offsets() {
+          return _offsets; 
+        },
 
         rotate: function () {
             this.rotation = (this.rotation + 1) % 4;
+            _setRotation();
         },
         move_right: function () {
             this.center = new Point(this.center.x + 1, this.center.y);
@@ -146,9 +155,11 @@ var Cow = function(breed) {
             this.center = new Point(this.center.x, this.center.y + 1);
         },
         clone: function () {
-            var cow = new Cow(this.breed);
+            var cow = new Cow(this.breed), x;
             cow.center = this.center;
             cow.rotation = this.rotation;
+            cow.offsets = this.offsets;
+
             return cow;
         }
     }
@@ -278,7 +289,8 @@ var Game = function () {
         },
 
         start: function () {
-            this.gameInProgress = true;
+            this.gameInProgr
+ess = true;
             this.board.drawCow(this.piece);
             this.intervalID = setInterval( (function(self) { 
                 return function () { 
