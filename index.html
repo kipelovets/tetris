@@ -1,43 +1,74 @@
-
 <html>
-  <head>
-    <title>Cowtris</title>
-    <link rel="stylesheet" type="text/css" href="style.css" />
-  </head>
-  <body onload="init()">
-  	<div id="container">
-	  	<div id="left">
-	  		<canvas id="game_canvas" width="200" height="440"></canvas>
-	  	</div>
-		<div id="right">
-			<img id="title" src="./resources/images/title.png" />
+    
+    <head>
+        <title>
+            Cowtris
+        </title>
+        <link rel="stylesheet" type="text/css" href="style.css" />
+    </head>
+    
+    <body onload="init()">
+        <div class="overlays">
+            <div id="game_over" class="message">
+                game over
+            </div>
+            <div id="paused" class="message">
+            	pasued
+            </div>
+        </div>
+        <div id="container">
+            <div id="left">
+                <canvas id="game_canvas" width="200" height="440">
+                </canvas>
+            </div>
+            <div id="right">
+                <img id="title" src="./resources/images/title.png" />
+                <div id="info_container">
+                    <table>
+                        <tr>
+                            <td>
+                                Score
+                            </td>
+                            <td id="score">
+                                0
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Rows
+                            </td>
+                            <td id="rows">
+                                0
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Level
+                            </td>
+                            <td id="level">
+                                1
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Next
+                            </td>
+                            <td id="next">
+                            	<canvas id="preview" width="84" height="52">
+                            	</canvas>
+                                <br>
+                                <span id="next_name">
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript" src="snippets.js">
+        </script>
+        <script type="text/javascript" src="cowtris.js">
+        </script>
+    </body>
 
-			<div id="info_container">
-				<table>
-					<tr>
-						<td>Score</td>
-						<td id="score">0</td>
-					</tr>
-					<tr>
-						<td>Rows</td>
-						<td id="rows">0</td>
-					</tr>
-					<tr>
-						<td>Level</td>
-						<td id="level">1</td>
-					</tr>
-					<tr>
-						<td>Next</td>
-						<td id="next">
-							<div id="next_image"></div><br>
-							<span id="next_name"></span>
-						</td>
-					</tr>
-				</table>
-			</div>
-		</div>
-	</div>
-	<script type="text/javascript" src="snippets.js"></script>
-    <script type="text/javascript" src="cowtris.js"></script>
-  </body>
 </html>
