@@ -61,6 +61,9 @@ var BREED_NAMES = Object.keys(BREEDS);
 var CowMap = new Image();
 CowMap.src = './resources/images/source.png';
 
+var NextCows = new Image();
+NextCows.src = './resources/images/next.png';
+
 var Point = function (x, y) {
     return { 'x': x, 'y': y };
 };
@@ -371,33 +374,15 @@ var Board = function () {
 
 var Preview = function () {
     var preview = document.getElementById('preview'),
-        previewContext = preview.getContext('2d'),
-        _clearPreview = function () {
-            previewContext.fillStyle = CONSTANTS.game_area_color;
-            previewContext.fillRect(0, 0, preview.width, preview.height);
-        }();
+        previewContext = preview.getContext('2d');
+
+    previewContext.fillStyle = 'rgb(221, 204, 187)';
+    previewContext.fillRect(0,0, 84, 52);
 
     return {
-        clearPreview: function() {
-            _clearPreview();
-        },
         drawCow: function (cow) {
-            var i;
-            for (i = 0; i < cow.positions.length; i++) {
-                var block_size = CONSTANTS.block_size, point = cow.positions[i];
-
-                // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
-                // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
-                previewContext.drawImage(CowMap,
-                    i * block_size,
-                    cow.breed * block_size,
-                    block_size,
-                    block_size,
-                    point.x * block_size,
-                    point.y * block_size,
-                    block_size,
-                    block_size);
-            }
+            // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
+            previewContext.drawImage(NextCows, 0, (cow.breed + 1) * 40, 80, 40, 4, 6, 80, 40);
         },
     };
 };
