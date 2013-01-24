@@ -166,24 +166,57 @@ var Cow = function(breed) {
 };
 
 var Board = function () {
-    var _ctx = document.getElementById('canvas').getContext('2d'),
+    var _canvas = document.getElementById('game_canvas'),
+        _ctx = _canvas.getContext('2d'),
         _cowMap = new Image(),
         _dropping = false,
         _dropHeight = -1,
         _board = (function () {
             var empty_board = [], i;
-            for(i = 0; i < CONSTANTS.num_cols; i++) {
-                empty_board.push(Array.apply(null, new Array(CONSTANTS.num_rows)).map(Number.prototype.valueOf, 0))
+            for(i = 0; i < CONSTANTS.num_rows; i++) {
+                empty_board.push(Array.apply(null, new Array(CONSTANTS.num_cols)).map(Number.prototype.valueOf, 0));
             }
             return empty_board;
-        }());
+        }()),
+        _aboveImage = document.createElement('canvas'),
+        _belowImage = document.createElement('canvas');
+
+    _canvas.width = CONSTANTS.num_cols * CONSTANTS.block_size;
+    _canvas.height = CONSTANTS.num_rows * CONSTANTS.block_size;
 
     _cowMap.src = './resources/images/source.png';
 
     _ctx.fillStyle = CONSTANTS.game_area_color;
     _ctx.fillRect(0, 0, CONSTANTS.block_size * CONSTANTS.num_cols, CONSTANTS.block_size * CONSTANTS.num_rows);
 
+    _aboveImage.width = _canvas.width;
+    _belowImage.width = _canvas.width;
+
     return {
+        get ctx () {
+            return _ctx;
+        },
+        get aboveImage (){
+            return _aboveImage;
+        },
+        get belowImage (){
+            return _belowImage;
+        },
+        get canvas (){
+            return _canvas;
+        },
+        set ctx (val) {
+            _ctx = val;
+        },
+        set aboveImage (val) {
+            _aboveImage = val;
+        },
+        set belowImage (val) {
+            _belowImage = val;
+        },
+        set canvas (val) {
+            _canvas = val;
+        },
         drawCow: function(cow) {
             var i;
             for (i = 0; i < cow.positions.length; i++) {
@@ -222,7 +255,7 @@ var Board = function () {
                     isConflicted = true;
                 } else if (p.y >= CONSTANTS.num_rows) {
                     isConflicted = true;
-                } else if (_board[p.x][p.y] === 1) {
+                } else if (_board[p.y][p.x] === 1) {
                     isConflicted = true;
                 }
             });
@@ -235,8 +268,9 @@ var Board = function () {
 
         addToBoard: function(cow) {
             cow.positions.forEach(function (p) {
-                _board[p.x][p.y] = 1;
+                _board[p.y][p.x] = 1;
             });
+            this.checkRowCompletions();
         },
 
         logBoard: function() {
@@ -245,6 +279,88 @@ var Board = function () {
                     return String(point);
                 });
             }).join('\n');
+        },
+
+        checkRowCompletions: function () {
+            var full_rows = [], row_num, recurse = false;
+
+            for (row_num = 0; row_num < _board.length; row_num++) {
+                var col_num = _board[row_num].length, sum = 0;
+                while (col_num--) {
+                    sum += _board[row_num][col_num];
+                }
+                if (sum == CONSTANTS.num_cols) {
+                    recurse = true;
+                    this.zapRow(row_num);
+                    break;
+                }
+            }
+
+            if (recurse) {
+                this.checkRowCompletions();
+            }
+        },
+
+        zapRow: function(row_num) {
+            _board.splice(row_num, 1);
+            _board.unshift(Array.apply(null, new Array(CONSTANTS.num_cols)).map(Number.prototype.valueOf, 0));
+
+            this.aboveImage.height = (row_num) * CONSTANTS.block_size;
+            
+            this.ctx = this.aboveImage.getContext('2d');
+            this.ctx.drawImage(this.canvas,
+                0,
+                0,
+                this.aboveImage.width,
+                this.aboveImage.height,
+                0,
+                0,
+                this.aboveImage.width,
+                this.aboveImage.height);
+
+            if( row_num + 1 < CONSTANTS.num_rows ) {
+                this.belowImage.height = (CONSTANTS.num_rows - row_num - 1) * CONSTANTS.block_size;
+                
+                this.ctx = this.belowImage.getContext('2d');
+                this.ctx.drawImage(this.canvas,
+                    0,
+                    this.canvas.height - this.belowImage.height,
+                    this.belowImage.width,
+                    this.belowImage.height,
+                    0,
+                    0,
+                    this.belowImage.width,
+                    this.belowImage.height);
+            } else {
+                this.belowImage.height = 0;
+           }
+
+            // reset canvas
+            this.ctx = this.canvas.getContext('2d'),
+            this.ctx.fillStyle = CONSTANTS.game_area_color;
+            this.ctx.fillRect(0, 0, CONSTANTS.block_size * CONSTANTS.num_cols, CONSTANTS.block_size * CONSTANTS.num_rows);
+
+            this.ctx.drawImage(this.aboveImage, 
+                0, 
+                0, 
+                this.aboveImage.width, 
+                this.aboveImage.height, 
+                0, 
+                this.canvas.height - (this.belowImage.height + this.aboveImage.height),
+                this.aboveImage.width,
+                this.aboveImage.height);
+
+            if( row_num + 1 < CONSTANTS.num_rows ) {
+                this.ctx.drawImage(this.belowImage,
+                    0,
+                    0,
+                    this.belowImage.width,
+                    this.belowImage.height,
+                    0,
+                    this.canvas.height - this.belowImage.height,
+                    this.belowImage.width,
+                    this.belowImage.height);
+            }
         }
     };
 };
@@ -289,8 +405,7 @@ var Game = function () {
         },
 
         start: function () {
-            this.gameInProgr
-ess = true;
+            this.gameInProgress = true;
             this.board.drawCow(this.piece);
             this.intervalID = setInterval( (function(self) { 
                 return function () { 
@@ -356,10 +471,6 @@ ess = true;
 };
 
 function init() {
-    // ADJUST CANVAS SIZE
-    document.getElementById('canvas').width = CONSTANTS.num_cols * CONSTANTS.block_size;
-    document.getElementById('canvas').height = CONSTANTS.num_rows * CONSTANTS.block_size;
-
     var game = new Game();
 
     window.onkeydown = function (e) {
