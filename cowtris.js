@@ -315,15 +315,7 @@ var Board = function () {
             this.aboveImage.height = (row_num) * CONSTANTS.block_size;
             
             this.ctx = this.aboveImage.getContext('2d');
-            this.ctx.drawImage(this.canvas,
-                0,
-                0,
-                this.aboveImage.width,
-                this.aboveImage.height,
-                0,
-                0,
-                this.aboveImage.width,
-                this.aboveImage.height);
+            this.ctx.drawImage(this.canvas, 0, 0, this.aboveImage.width, this.aboveImage.height, 0, 0, this.aboveImage.width, this.aboveImage.height);
 
             if( row_num + 1 < CONSTANTS.num_rows ) {
                 this.belowImage.height = (CONSTANTS.num_rows - row_num - 1) * CONSTANTS.block_size;
@@ -382,7 +374,9 @@ var Preview = function () {
     return {
         drawCow: function (cow) {
             // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
-            previewContext.drawImage(NextCows, 0, (cow.breed + 1) * 40, 80, 40, 4, 6, 80, 40);
+            previewContext.drawImage(NextCows, 0, (cow.breed) * 40, 80, 40, 4, 6, 80, 40);
+
+            document.getElementById('preview_name').innerHTML = cow.name;
         },
     };
 };
@@ -392,6 +386,7 @@ var Game = function () {
         _intervalID,
         _dropIntervalID,
         _piece = new Cow(Math.floor(Math.random() * 7)),
+        _nextPiece = new Cow(Math.floor(Math.random() * 7)),
         _gameInProgress = false,
         _gamePaused = false,
         _gameOver = false,
@@ -439,6 +434,18 @@ var Game = function () {
         set rows (val) {
             return _rows = val;            
         },
+        get nextPiece () {
+            return _nextPiece;
+        },
+        set nextPiece (val) {
+            return _nextPiece = val;
+        },
+        get preview () {
+            return _preview;
+        },
+        set preview (val) {
+            return _preview = val;
+        },
 
         start: function () {
             this.gameInProgress = true;
@@ -446,9 +453,11 @@ var Game = function () {
             this.board.gameFunctions = { increaseRowsCount: this.increaseRowsCount };
 
             this.board.drawCow(this.piece);
+            this.preview.drawCow(this.nextPiece);
+
             this.intervalID = setInterval( (function(self) { 
                 return function () { 
-                    self.advancePiece(); 
+                    self.advancePiece();
                 } 
             })(this), this.interval);
         },
@@ -493,9 +502,7 @@ var Game = function () {
         },
 
         dropPiece: function () {
-            var dropTimer = 
-
-            this.dropIntervalID = setInterval( (function(self) { 
+            var dropTimer = this.dropIntervalID = setInterval( (function(self) {
                 return function () { 
                     if ( !self.advancePiece() )
                         clearInterval(self.dropIntervalID);
@@ -529,7 +536,11 @@ var Game = function () {
         },
 
         newPiece: function () {
-            this.piece = new Cow(Math.floor(Math.random() * 7));
+            this.piece = this.nextPiece.clone();
+
+            this.nextPiece = new Cow(Math.floor(Math.random() * 7));
+
+            this.preview.drawCow(this.nextPiece);
 
             if (this.board.isConflicted(this.piece))
                 this.gameOver();

@@ -34,9 +34,9 @@ body {
 }
 
 #info_container table {
-	padding-top: 20;
+	padding-top: 45;
 	width: 390;
-	height: 375;
+	height: 350;
 
 	font-family: sans-serif;
 	font-size: 20px;
