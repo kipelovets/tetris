@@ -1,8 +1,18 @@
-// Copyright 2012-2013 by Ben Jacobs <benmillerj@gmail.com>; released under
-// the terms of the GNU Public License. Based on concept/code (copyright
-// 2000-2003 under the terms of the GPL) by David Glick <dglick@gmail.com> The
-// original game, and source, can be found at
-// http://nonsense.wglick.org/cowtris.html
+/*jslint white: true */
+/*global Image: true */
+/*global document: true */
+/*global window: true */
+/*jslint es5: true */
+
+/*
+ * Copyright 2012-2013 by Ben Jacobs <benmillerj@gmail.com>. Released under the
+ * terms of the GNU Public License. 
+ *
+ * Based on concept/code (copyright 2000-2003 under the terms of the GPL) by
+ * David Glick <dglick@gmail.com> The original game, and source, can be found
+ * at http://nonsense.wglick.org/cowtris.html
+ */
+
 var CONSTANTS = {
     num_cols: 10,
     num_rows: 22,
@@ -15,23 +25,23 @@ var CONSTANTS = {
 // The other 4 pairs give the x- and y-offsets of each block from the center of
 // the piece.
 
-var _NormalCowDef = [
+var NormalCowDef = [
     5, 0, -1, 0, 0, 0, 1, 0, 2, 0, // Guernsey
     5, 1, -1, -1, -1, 0, 0, 0, 1, 0, // AberdeenAngus
     5, 1, 1, -1, -1, 0, 0, 0, 1, 0, // Ayrshire
     5, 1, -1, -1, 0, -1, 0, 0, 1, 0, // Hereford
     5, 1, 0, -1, 1, -1, -1, 0, 0, 0, // Jersey
     5, 0, -1, 0, 0, 0, 1, 0, 0, 1, // TexasLonghorn
-    5, 1, 0, -1, 1, -1, 0, 0, 1, 0, // Holstein
+    5, 1, 0, -1, 1, -1, 0, 0, 1, 0 // Holstein
     ];
 
-var _SpecialCowDef = [
+var SpecialCowDef = [
     5, 1, 0, 0, 0, 0, 0, 0, 0, 0, // MadCow
     5, 1, 0, 0, 0, 0, 0, 0, 0, 0, // HolyCow
     5, 1, 0, 0, 0, 0, 0, 0, 0, 0 // PurpleCow
     ];
 
-var CowDef = _NormalCowDef;
+var CowDef = NormalCowDef;
 
 var ROTATION_NAMES = {
     RotNormal: 0,
@@ -64,491 +74,402 @@ CowMap.src = './resources/images/source.png';
 var NextCows = new Image();
 NextCows.src = './resources/images/next.png';
 
-var Point = function (x, y) {
-    return { 'x': x, 'y': y };
-};
+function Point (x, y) {
+    this.x = x;
+    this.y = y;
+}
 
-var Cow = function(breed) {
-    // 'private variables'
-    var _rotation = ROTATION_NAMES.RotNormal,
-        _breed = breed,
-        _name = BREED_NAMES[breed],
-        _special = false,
-        _center = (function () {
-            return new Point(CowDef[10 * breed], CowDef[10 * breed + 1]);
-        }()),
-        _offsets = (function () {
-            var offsets = [], i;
+function Cow(breed) {
+    this.rotation = ROTATION_NAMES.RotNormal;
 
-            for(i = 0; i <= 3; i += 1) {
-                offsets.push(new Point(
-                CowDef[10 * breed + 2 + 2 * i], CowDef[10 * breed + 3 + 2 * i]));
-            }
+    this.breed = breed;
 
-            return offsets;
-        }());
+    this.name = BREED_NAMES[this.breed];
 
-    var _setRotation = function () {
+    this.special = false;
+
+    this.center = (function (breed) {
+        return new Point(CowDef[10 * breed], CowDef[10 * breed + 1]);
+    }(breed));
+
+    this.offsets = (function (breed) {
+        var offsets = [], i;
+
+        for(i = 0; i <= 3; i += 1) {
+            offsets.push(
+                new Point(CowDef[10 * breed + 2 + 2 * i], CowDef[10 * breed + 3 + 2 * i])
+                );
+        }
+
+        return offsets;
+    }(breed));
+
+    this.rotate = function () {
         var i;
+        this.rotation = (this.rotation + 1) % 4;
 
         for (i = 0; i <= 3; i+=1) {
-            var x = _offsets[i].x, y = _offsets[i].y;
+            var x = this.offsets[i].x, y = this.offsets[i].y;
 
-            _offsets[i].x = -y;
-            _offsets[i].y = x;
+            this.offsets[i].x = -y;
+            this.offsets[i].y = x;
         }
     };
 
-    return {
-        set rotation(val) {
-            if (typeof val !== 'number') {
-                throw new TypeError();
-            } else if ( 0 > val || val > 3 ) {
-                throw new RangeError();
-            } else {
-                _rotation = val;
-                return _rotation;
-            }
-        },
-        get rotation() {
-            return _rotation;
-        },
-        get breed() {
-            return _breed;
-        },
-        get name() {
-            return _name;
-        },
-        get special() {
-            return _special;
-        },
-        get center() {
-            return _center;
-        },
-        set center(val) {
-            _center = val;
-        },
-        get positions() {
-            return _offsets.map(function(p) {
-                return new Point(p.x + _center.x, p.y + _center.y);
-            });
-        },
-        set offsets(val) {
-            _offsets = [];
-            val.forEach(function(p) {
-                _offsets.push(new Point(p.x, p.y));
-            });
-        },
-        get offsets() {
-          return _offsets; 
-        },
+    this.move_right = function () {
 
-        rotate: function () {
-            this.rotation = (this.rotation + 1) % 4;
-            _setRotation();
-        },
-        move_right: function () {
-            this.center = new Point(this.center.x + 1, this.center.y);
-        },
-        move_left: function () {
-            this.center = new Point(this.center.x - 1, this.center.y);
-        },
-        advance: function () {
-            this.center = new Point(this.center.x, this.center.y + 1);
-        },
-        clone: function () {
-            var cow = new Cow(this.breed), x;
-            cow.center = this.center;
-            cow.rotation = this.rotation;
-            cow.offsets = this.offsets;
+        this.center = new Point(this.center.x + 1, this.center.y);
+    };
 
-            return cow;
-        }
+    this.move_left = function () {
+
+        this.center = new Point(this.center.x - 1, this.center.y);
+    };
+
+    this.advance = function () {
+
+        this.center = new Point(this.center.x, this.center.y + 1);
+    };
+
+    this.clone = function () {
+        var cow = new Cow(this.breed);
+        cow.center = new Point(this.center.x, this.center.y);
+        cow.rotation = this.rotation;
+        cow.offsets = this.offsets.map(function(elem) {
+            return new Point(elem.x, elem.y);
+        });
+
+        return cow;
+    };
+}
+
+Cow.prototype = {
+    get positions() {
+        var cow = this;
+
+        return cow.offsets.map(function(p) {
+            return new Point(p.x + cow.center.x, p.y + cow.center.y);
+        }); 
+    },
+    set positions(value) {
+        return false;
     }
 };
 
 var Board = function () {
-    var _canvas = document.getElementById('game_canvas'),
-        _ctx = _canvas.getContext('2d'),
-        _dropping = false,
-        _dropHeight = -1,
-        _board = (function () {
-            var empty_board = [], i;
-            for(i = 0; i < CONSTANTS.num_rows; i++) {
-                empty_board.push(Array.apply(null, new Array(CONSTANTS.num_cols)).map(Number.prototype.valueOf, 0));
+    this.canvas = document.getElementById('game_canvas');
+    this.canvas.width = CONSTANTS.num_cols * CONSTANTS.block_size;
+    this.canvas.height = CONSTANTS.num_rows * CONSTANTS.block_size;
+
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.fillStyle = CONSTANTS.game_area_color;
+    this.ctx.fillRect(0, 0, CONSTANTS.block_size * CONSTANTS.num_cols, CONSTANTS.block_size * CONSTANTS.num_rows);
+
+    this.dropping = false;
+
+    this.dropHeight = -1;
+
+    this.board = (function () {
+        var empty_board = [], i;
+        for(i = 0; i < CONSTANTS.num_rows; i++) {
+            var line = [], l;
+            for (l = 0; l < CONSTANTS.num_cols; l++) {
+                line[l] = 0;
             }
-            return empty_board;
-        }()),
-        _aboveImage = document.createElement('canvas'),
-        _belowImage = document.createElement('canvas'),
-        _gameFunctions = {};
+            empty_board.push(line);
+        }
+        return empty_board;
+    }());
 
-    _canvas.width = CONSTANTS.num_cols * CONSTANTS.block_size;
-    _canvas.height = CONSTANTS.num_rows * CONSTANTS.block_size;
+    this.aboveImage = document.createElement('canvas');
+    this.aboveImage.width = this.canvas.width;
 
-    _ctx.fillStyle = CONSTANTS.game_area_color;
-    _ctx.fillRect(0, 0, CONSTANTS.block_size * CONSTANTS.num_cols, CONSTANTS.block_size * CONSTANTS.num_rows);
+    this.belowImage = document.createElement('canvas');
+    this.belowImage.width = this.canvas.width;
+    
+    this.gameFunctions = {};
 
-    _aboveImage.width = _canvas.width;
-    _belowImage.width = _canvas.width;
+    this.drawCow = function(cow) {
+        var i;
+        for (i = 0; i < cow.positions.length; i++) {
+            var block_size = CONSTANTS.block_size, point = cow.positions[i];
 
-    return {
-        get ctx () {
-            return _ctx;
-        },
-        get aboveImage (){
-            return _aboveImage;
-        },
-        get belowImage (){
-            return _belowImage;
-        },
-        get canvas (){
-            return _canvas;
-        },
-        set ctx (val) {
-            _ctx = val;
-        },
-        set aboveImage (val) {
-            _aboveImage = val;
-        },
-        set belowImage (val) {
-            _belowImage = val;
-        },
-        set canvas (val) {
-            _canvas = val;
-        },
-        get gameFunctions () {
-            return _gameFunctions;
-        },
+            // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
+            // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
+            this.ctx.drawImage(CowMap,
+                (i + 4 * cow.rotation) * block_size,
+                cow.breed * block_size,
+                block_size,
+                block_size,
+                point.x * block_size,
+                point.y * block_size,
+                block_size,
+                block_size);
+        }
+    };
 
-        set gameFunctions (val) {
-            return _gameFunctions = val;
-        },
+    this.eraseCow = function(cow) {
+        var self = this;
 
-        drawCow: function(cow) {
-            var i;
-            for (i = 0; i < cow.positions.length; i++) {
-                var block_size = CONSTANTS.block_size, point = cow.positions[i];
+        cow.positions.forEach(function(p) {
+            self.ctx.fillStyle = CONSTANTS.game_area_color;
+            self.ctx.fillRect(
+                p.x * CONSTANTS.block_size,
+                p.y * CONSTANTS.block_size,
+                CONSTANTS.block_size,
+                CONSTANTS.block_size);
+        });
+    };
 
-                // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
-                // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
-                _ctx.drawImage(CowMap,
-                    (i + 4 * cow.rotation) * block_size,
-                    cow.breed * block_size,
-                    block_size,
-                    block_size,
-                    point.x * block_size,
-                    point.y * block_size,
-                    block_size,
-                    block_size);
+    this.isConflicted = function(cow) {
+        var isConflicted = false, self = this;
+        
+        cow.positions.forEach(function(p) {
+            if (p.x >= CONSTANTS.num_cols || p.x < 0) {
+                isConflicted = true;
+            } else if (p.y >= CONSTANTS.num_rows) {
+                isConflicted = true;
+            } else if (self.board[p.y][p.x] === 1) {
+                isConflicted = true;
             }
-        },
+        });
 
-        eraseCow: function(cow) {
-            cow.positions.forEach(function(p) {
-                _ctx.fillStyle = CONSTANTS.game_area_color;
-                _ctx.fillRect(
-                    p.x * CONSTANTS.block_size,
-                    p.y * CONSTANTS.block_size,
-                    CONSTANTS.block_size,
-                    CONSTANTS.block_size);
+        return isConflicted;
+    };
+
+    this.addToBoard = function(cow) {
+        var i, self = this;
+
+        cow.positions.forEach(function (p) {
+            self.board[p.y][p.x] = 1;
+        });
+        this.checkRowCompletions();
+    };
+
+    this.logBoard = function() {
+        return this.board.map(function(row) {
+            return row.map(function(point) {
+                return String(point);
             });
-        },
+        }).join('\n');
+    };
 
-        isConflicted: function(cow) {
-            var isConflicted = false;
-            
-            cow.positions.forEach(function(p) {
-                if (p.x >= CONSTANTS.num_cols || p.x < 0) {
-                    isConflicted = true;
-                } else if (p.y >= CONSTANTS.num_rows) {
-                    isConflicted = true;
-                } else if (_board[p.y][p.x] === 1) {
-                    isConflicted = true;
-                }
-            });
+    this.checkRowCompletions = function () {
+        var full_rows = [], row_num, recurse = false;
 
-            return isConflicted;
-        },
+        for (row_num = 0; row_num < this.board.length; row_num++) {
+            var col_num = this.board[row_num].length, sum = 0;
+            while (col_num--) {
+                sum += this.board[row_num][col_num];
+            }
+            if (sum === CONSTANTS.num_cols) {
+                recurse = true;
+                this.zapRow(row_num);
+                break;
+            }
+        }
 
-        addToBoard: function(cow) {
-            cow.positions.forEach(function (p) {
-                _board[p.y][p.x] = 1;
-            });
+        if (recurse) {
             this.checkRowCompletions();
-        },
+        }
+    };
 
-        logBoard: function() {
-            return _board.map(function(row) {
-                return row.map(function(point) {
-                    return String(point);
-                });
-            }).join('\n');
-        },
+    this.zapRow = function(row_num) {
+        var i, line = [];
 
-        checkRowCompletions: function () {
-            var full_rows = [], row_num, recurse = false;
+        this.gameFunctions.increaseRowsCount();
 
-            for (row_num = 0; row_num < _board.length; row_num++) {
-                var col_num = _board[row_num].length, sum = 0;
-                while (col_num--) {
-                    sum += _board[row_num][col_num];
-                }
-                if (sum == CONSTANTS.num_cols) {
-                    recurse = true;
-                    this.zapRow(row_num);
-                    break;
-                }
-            }
+        for (i = 0; i < CONSTANTS.num_cols; i+=1) {
+            line[i] = 0;
+        }
 
-            if (recurse) {
-                this.checkRowCompletions();
-            }
-        },
+        this.board.splice(row_num, 1);
+        this.board.unshift(line);
 
-        zapRow: function(row_num) {
-            this.gameFunctions.increaseRowsCount();
+        this.aboveImage.height = row_num * CONSTANTS.block_size;
+        
+        this.ctx = this.aboveImage.getContext('2d');
+        this.ctx.drawImage(this.canvas, 0, 0, this.aboveImage.width, this.aboveImage.height, 0, 0, this.aboveImage.width, this.aboveImage.height);
 
-            _board.splice(row_num, 1);
-            _board.unshift(Array.apply(null, new Array(CONSTANTS.num_cols)).map(Number.prototype.valueOf, 0));
-
-            this.aboveImage.height = (row_num) * CONSTANTS.block_size;
+        if( row_num + 1 < CONSTANTS.num_rows ) {
+            this.belowImage.height = (CONSTANTS.num_rows - row_num - 1) * CONSTANTS.block_size;
             
-            this.ctx = this.aboveImage.getContext('2d');
-            this.ctx.drawImage(this.canvas, 0, 0, this.aboveImage.width, this.aboveImage.height, 0, 0, this.aboveImage.width, this.aboveImage.height);
+            this.ctx = this.belowImage.getContext('2d');
+            this.ctx.drawImage(this.canvas,
+                0,
+                this.canvas.height - this.belowImage.height,
+                this.belowImage.width,
+                this.belowImage.height,
+                0,
+                0,
+                this.belowImage.width,
+                this.belowImage.height);
+        } else {
+            this.belowImage.height = 0;
+        }
 
-            if( row_num + 1 < CONSTANTS.num_rows ) {
-                this.belowImage.height = (CONSTANTS.num_rows - row_num - 1) * CONSTANTS.block_size;
-                
-                this.ctx = this.belowImage.getContext('2d');
-                this.ctx.drawImage(this.canvas,
-                    0,
-                    this.canvas.height - this.belowImage.height,
-                    this.belowImage.width,
-                    this.belowImage.height,
-                    0,
-                    0,
-                    this.belowImage.width,
-                    this.belowImage.height);
-            } else {
-                this.belowImage.height = 0;
-            }
+        // reset canvas
+        this.ctx = this.canvas.getContext('2d');
+        this.ctx.fillStyle = CONSTANTS.game_area_color;
+        this.ctx.fillRect(0, 0, CONSTANTS.block_size * CONSTANTS.num_cols, CONSTANTS.block_size * CONSTANTS.num_rows);
 
-            // reset canvas
-            this.ctx = this.canvas.getContext('2d'),
-            this.ctx.fillStyle = CONSTANTS.game_area_color;
-            this.ctx.fillRect(0, 0, CONSTANTS.block_size * CONSTANTS.num_cols, CONSTANTS.block_size * CONSTANTS.num_rows);
+        this.ctx.drawImage(this.aboveImage, 
+            0, 
+            0, 
+            this.aboveImage.width, 
+            this.aboveImage.height, 
+            0, 
+            this.canvas.height - (this.belowImage.height + this.aboveImage.height),
+            this.aboveImage.width,
+            this.aboveImage.height);
 
-            this.ctx.drawImage(this.aboveImage, 
-                0, 
-                0, 
-                this.aboveImage.width, 
-                this.aboveImage.height, 
-                0, 
-                this.canvas.height - (this.belowImage.height + this.aboveImage.height),
-                this.aboveImage.width,
-                this.aboveImage.height);
-
-            if( row_num + 1 < CONSTANTS.num_rows ) {
-                this.ctx.drawImage(this.belowImage,
-                    0,
-                    0,
-                    this.belowImage.width,
-                    this.belowImage.height,
-                    0,
-                    this.canvas.height - this.belowImage.height,
-                    this.belowImage.width,
-                    this.belowImage.height);
-            }
+        if( row_num + 1 < CONSTANTS.num_rows ) {
+            this.ctx.drawImage(this.belowImage,
+                0,
+                0,
+                this.belowImage.width,
+                this.belowImage.height,
+                0,
+                this.canvas.height - this.belowImage.height,
+                this.belowImage.width,
+                this.belowImage.height);
         }
     };
 };
 
-var Preview = function () {
-    var preview = document.getElementById('preview'),
-        previewContext = preview.getContext('2d');
+function Preview () {
+    this.preview = document.getElementById('preview');
+    
+    this.previewContext = this.preview.getContext('2d');
+    this.previewContext.fillStyle = 'rgb(221, 204, 187)';
+    this.previewContext.fillRect(0,0, 84, 52);
 
-    previewContext.fillStyle = 'rgb(221, 204, 187)';
-    previewContext.fillRect(0,0, 84, 52);
+    this.drawCow = function (cow) {
+        this.previewContext.drawImage(NextCows, 0, (cow.breed) * 40, 80, 40, 4, 6, 80, 40);
 
-    return {
-        drawCow: function (cow) {
-            // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
-            previewContext.drawImage(NextCows, 0, (cow.breed) * 40, 80, 40, 4, 6, 80, 40);
-
-            document.getElementById('preview_name').innerHTML = cow.name;
-        },
+        document.getElementById('preview_name').innerHTML = cow.name;
     };
-};
+}
 
-var Game = function () {
-    var _interval = 200,
-        _intervalID,
-        _dropIntervalID,
-        _piece = new Cow(Math.floor(Math.random() * 7)),
-        _nextPiece = new Cow(Math.floor(Math.random() * 7)),
-        _gameInProgress = false,
-        _gamePaused = false,
-        _gameOver = false,
-        _score = 0,
-        _rows = 0,
-        _level = 0
-        _board = new Board(),
-        _oldBoard = new Board(),
-        _preview = new Preview();
+function Game () {
+    this.interval = 200;
+    this.intervalID = null;
+    this.dropIntervalID = null;
+    this.piece = new Cow(Math.floor(Math.random() * 7));
+    this.nextPiece = new Cow(Math.floor(Math.random() * 7));
+    this.gameInProgress = false;
+    this.gamePaused = false;
+    this.gameOver = false;
+    this.score = 0;
+    this.rows = 0;
+    this.level = 0;
+    this.board = new Board();
+    this.oldBoard = new Board();
+    this.preview = new Preview();
 
-    return {
-        get piece () {
-            return _piece;
-        },
-        set piece (val) {
-            return _piece = val;
-        },
-        get board () {
-            return _board;
-        },
-        get interval () {
-            return _interval;
-        },
-        get intervalID () {
-            return _intervalID;
-        },
-        set intervalID (val) {
-            return _intervalID = val;
-        },
-        get gameInProgress () {
-            return _gameInProgress;
-        },
-        set gameInProgress (val) {
-            return _gameInProgress = val;
-        },
-        get dropIntervalID () {
-            return _dropIntervalID;
-        },
-        set dropIntervalID (val) {
-            return _dropIntervalID = val;
-        },
-        get rows () {
-            return _rows;
-        },
-        set rows (val) {
-            return _rows = val;            
-        },
-        get nextPiece () {
-            return _nextPiece;
-        },
-        set nextPiece (val) {
-            return _nextPiece = val;
-        },
-        get preview () {
-            return _preview;
-        },
-        set preview (val) {
-            return _preview = val;
-        },
+    this.start = function () {
+        this.gameInProgress = true;
 
-        start: function () {
-            this.gameInProgress = true;
+        this.board.gameFunctions = { increaseRowsCount: this.increaseRowsCount };
 
-            this.board.gameFunctions = { increaseRowsCount: this.increaseRowsCount };
+        this.board.drawCow(this.piece);
+        this.preview.drawCow(this.nextPiece);
 
+        this.intervalID = setInterval( (function(self) { 
+            return function () { 
+                self.advancePiece();
+            };
+        }(this)), this.interval);
+    };
+
+    this.advancePiece = function () {
+        var provisional = this.piece.clone(), advanced = true;
+        provisional.advance();
+
+        if ( this.board.isConflicted(provisional) ) {
+            this.board.addToBoard(this.piece);
+            this.newPiece();
+            advanced = false;
+        } else {
+            this.board.eraseCow(this.piece);
+            this.piece.advance();
             this.board.drawCow(this.piece);
-            this.preview.drawCow(this.nextPiece);
+        }
 
-            this.intervalID = setInterval( (function(self) { 
-                return function () { 
-                    self.advancePiece();
-                } 
-            })(this), this.interval);
-        },
-
-        advancePiece: function () {
-            var provisional = this.piece.clone(), advanced = true;
-            provisional.advance();
-
-            if ( this.board.isConflicted(provisional) ) {
-                this.board.addToBoard(this.piece);
-                this.newPiece();
-                advanced = false;
-            } else {
-                this.board.eraseCow(this.piece)
-                this.piece.advance();
-                this.board.drawCow(this.piece);
-            }
-
-            return advanced;
-        },
-
-        movePieceRight: function () {
-            var provisional = this.piece.clone();
-            provisional.move_right();
-
-            if ( !this.board.isConflicted(provisional) ) {
-                this.board.eraseCow(this.piece)
-                this.piece.move_right();
-                this.board.drawCow(this.piece);
-            }
-        },
-
-        movePieceLeft: function () {
-            var provisional = this.piece.clone();
-            provisional.move_left();
-
-            if ( !this.board.isConflicted(provisional) ) {
-                this.board.eraseCow(this.piece)
-                this.piece.move_left();
-                this.board.drawCow(this.piece);
-            }
-        },
-
-        dropPiece: function () {
-            var dropTimer = this.dropIntervalID = setInterval( (function(self) {
-                return function () { 
-                    if ( !self.advancePiece() )
-                        clearInterval(self.dropIntervalID);
-                }
-            })(this), 10);
-        },
-
-        rotatePiece: function () {
-            var provisional = this.piece.clone();
-            provisional.rotate();
-
-            if ( this.board.isConflicted(provisional) ) {
-                this.board.addToBoard(this.piece);
-                this.newPiece();
-            } else {
-                this.board.eraseCow(this.piece)
-                this.piece.rotate();
-                this.board.drawCow(this.piece);
-            }
-        },
-
-        gameOver: function () {
-            clearInterval(this.intervalID);
-            document.getElementById('game_over').style.display = 'block';
-            _gameOver = true;
-        },
-
-        increaseRowsCount: function () {
-            _rows = _rows + 1;
-            document.getElementById('rows').innerText = String(_rows);
-        },
-
-        newPiece: function () {
-            this.piece = this.nextPiece.clone();
-
-            this.nextPiece = new Cow(Math.floor(Math.random() * 7));
-
-            this.preview.drawCow(this.nextPiece);
-
-            if (this.board.isConflicted(this.piece))
-                this.gameOver();
-            else
-                this.board.drawCow(this.piece);
-        },
+        return advanced;
     };
-};
+
+    this.movePieceRight = function () {
+        var provisional = this.piece.clone();
+        provisional.move_right();
+
+        if ( !this.board.isConflicted(provisional) ) {
+            this.board.eraseCow(this.piece);
+            this.piece.move_right();
+            this.board.drawCow(this.piece);
+        }
+    };
+
+    this.movePieceLeft = function () {
+        var provisional = this.piece.clone();
+        provisional.move_left();
+
+        if ( !this.board.isConflicted(provisional) ) {
+            this.board.eraseCow(this.piece);
+            this.piece.move_left();
+            this.board.drawCow(this.piece);
+        }
+    };
+
+    this.dropPiece = function () {
+        var dropTimer = this.dropIntervalID = setInterval( (function(self) {
+            return function () { 
+                if ( !self.advancePiece() ) {
+                    clearInterval(self.dropIntervalID);
+                }
+            };
+        }(this)), 10);
+    };
+
+    this.rotatePiece = function () {
+        var provisional = this.piece.clone();
+        provisional.rotate();
+
+        if ( this.board.isConflicted(provisional) ) {
+            this.board.addToBoard(this.piece);
+            this.newPiece();
+        } else {
+            this.board.eraseCow(this.piece);
+            this.piece.rotate();
+            this.board.drawCow(this.piece);
+        }
+    };
+
+    this.gameOver = function () {
+        clearInterval(this.intervalID);
+        document.getElementById('game_over').style.display = 'block';
+        this.gameOver = true;
+    };
+
+    this.increaseRowsCount = function () {
+        this.rows = this.rows + 1;
+        document.getElementById('rows').innerText = String(this.rows);
+    };
+
+    this.newPiece = function () {
+        this.piece = this.nextPiece.clone();
+
+        this.nextPiece = new Cow(Math.floor(Math.random() * 7));
+
+        this.preview.drawCow(this.nextPiece);
+
+        if (this.board.isConflicted(this.piece)) {
+            this.gameOver();
+        } else {
+            this.board.drawCow(this.piece);
+        }
+    };
+}
 
 function init() {
     var game = new Game();
