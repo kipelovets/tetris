@@ -43,16 +43,14 @@ var SpecialCowDef = [
 
 var CowDef = NormalCowDef;
 
-var ROTATION_NAMES = {
+var Rotation_Names = {
     RotNormal: 0,
     RotRight: 1,
     RotFlipped: 2,
     RotLeft: 3
     };
 
-var ROTATIONS = Object.keys(ROTATION_NAMES);
-
-var BREEDS = {
+var Breeds = {
     'Guernsey': 0,
     'Aberdeen Angus': 1,
     'Ayrshire': 2,
@@ -66,7 +64,7 @@ var BREEDS = {
     };
 
 // these could be functions, but this is pretty quick
-var BREED_NAMES = Object.keys(BREEDS);
+var Breed_Names = Object.keys(Breeds);
 
 var CowMap = new Image();
 CowMap.src = './resources/images/source.png';
@@ -80,11 +78,11 @@ function Point (x, y) {
 }
 
 function Cow(breed) {
-    this.rotation = ROTATION_NAMES.RotNormal;
+    this.rotation = Rotation_Names.RotNormal;
 
     this.breed = breed;
 
-    this.name = BREED_NAMES[this.breed];
+    this.name = Breed_Names[this.breed];
 
     this.special = false;
 
@@ -435,10 +433,7 @@ function Game () {
         var provisional = this.piece.clone();
         provisional.rotate();
 
-        if ( this.board.isConflicted(provisional) ) {
-            this.board.addToBoard(this.piece);
-            this.newPiece();
-        } else {
+        if ( !this.board.isConflicted(provisional) ) {
             this.board.eraseCow(this.piece);
             this.piece.rotate();
             this.board.drawCow(this.piece);
