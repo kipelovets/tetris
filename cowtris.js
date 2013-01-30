@@ -185,7 +185,7 @@ var Board = function () {
     this.belowImage = document.createElement('canvas');
     this.belowImage.width = this.canvas.width;
     
-    this.gameFunctions = {};
+    this.parent = {};
 
     this.drawCow = function(cow) {
         var i;
@@ -241,6 +241,9 @@ var Board = function () {
         cow.positions.forEach(function (p) {
             self.board[p.y][p.x] = 1;
         });
+
+        this.parent.clearDrop();
+
         this.checkRowCompletions();
     };
 
@@ -275,7 +278,7 @@ var Board = function () {
     this.zapRow = function(row_num) {
         var i, line = [];
 
-        this.gameFunctions.increaseRowsCount();
+        this.parent.increaseRowsCount();
 
         for (i = 0; i < CONSTANTS.num_cols; i+=1) {
             line[i] = 0;
@@ -368,7 +371,7 @@ function Game () {
     this.start = function () {
         this.gameInProgress = true;
 
-        this.board.gameFunctions = { increaseRowsCount: this.increaseRowsCount };
+        this.board.parent = this;
 
         this.board.drawCow(this.piece);
         this.preview.drawCow(this.nextPiece);
@@ -380,21 +383,22 @@ function Game () {
         }(this)), this.interval);
     };
 
+    this.clearDrop = function () {
+        clearInterval(this.dropIntervalID);
+    };
+
     this.advancePiece = function () {
-        var provisional = this.piece.clone(), advanced = true;
+        var provisional = this.piece.clone();
         provisional.advance();
 
         if ( this.board.isConflicted(provisional) ) {
             this.board.addToBoard(this.piece);
             this.newPiece();
-            advanced = false;
         } else {
             this.board.eraseCow(this.piece);
             this.piece.advance();
             this.board.drawCow(this.piece);
         }
-
-        return advanced;
     };
 
     this.movePieceRight = function () {
@@ -420,11 +424,9 @@ function Game () {
     };
 
     this.dropPiece = function () {
-        var dropTimer = this.dropIntervalID = setInterval( (function(self) {
+        this.dropIntervalID = setInterval( (function(self) {
             return function () { 
-                if ( !self.advancePiece() ) {
-                    clearInterval(self.dropIntervalID);
-                }
+                self.advancePiece();
             };
         }(this)), 10);
     };
