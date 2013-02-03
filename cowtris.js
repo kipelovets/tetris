@@ -6,7 +6,7 @@
 
 /*
  * Copyright 2012-2013 by Ben Jacobs <benmillerj@gmail.com>. Released under the
- * terms of the GNU Public License. 
+ * terms of the GNU Public License.
  *
  * Based on concept/code (copyright 2000-2003 under the terms of the GPL) by
  * David Glick <dglick@gmail.com> The original game, and source, can be found
@@ -147,7 +147,7 @@ Cow.prototype = {
 
         return cow.offsets.map(function(p) {
             return new Point(p.x + cow.center.x, p.y + cow.center.y);
-        }); 
+        });
     },
     set positions(value) {
         return false;
@@ -184,13 +184,13 @@ var Board = function () {
 
     this.belowImage = document.createElement('canvas');
     this.belowImage.width = this.canvas.width;
-    
+
     this.parent = {};
 
     this.drawCow = function(cow) {
         var i;
         for (i = 0; i < cow.positions.length; i++) {
-            var block_size = CONSTANTS.block_size, point = cow.positions[i];
+           var block_size = CONSTANTS.block_size, point = cow.positions[i];
 
             // PREFIXES: 'S' IS FOR 'SOURCE' AND 'D' IS FOR 'DESTINATION'
             // DRAWIMAGE(IMAGE, SX, SY, SWIDTH, SHEIGHT, DX, DY, DWIDTH, DHEIGHT)
@@ -221,7 +221,7 @@ var Board = function () {
 
     this.isConflicted = function(cow) {
         var isConflicted = false, self = this;
-        
+
         cow.positions.forEach(function(p) {
             if (p.x >= CONSTANTS.num_cols || p.x < 0) {
                 isConflicted = true;
@@ -255,8 +255,11 @@ var Board = function () {
         }).join('\n');
     };
 
-    this.checkRowCompletions = function () {
-        var full_rows = [], row_num, recurse = false;
+    this.checkRowCompletions = function (Num_Zapped) {
+        var full_rows = [],
+            row_num,
+            recurse = false
+            num_zapped = Num_Zapped | 0;
 
         for (row_num = 0; row_num < this.board.length; row_num++) {
             var col_num = this.board[row_num].length, sum = 0;
@@ -271,14 +274,14 @@ var Board = function () {
         }
 
         if (recurse) {
-            this.checkRowCompletions();
+            this.checkRowCompletions(num_zapped + 1);
+        } else {
+            this.parent.increaseRowsCount(num_zapped);
         }
     };
 
     this.zapRow = function(row_num) {
         var i, line = [];
-
-        this.parent.increaseRowsCount();
 
         for (i = 0; i < CONSTANTS.num_cols; i+=1) {
             line[i] = 0;
@@ -288,13 +291,13 @@ var Board = function () {
         this.board.unshift(line);
 
         this.aboveImage.height = row_num * CONSTANTS.block_size;
-        
+
         this.ctx = this.aboveImage.getContext('2d');
         this.ctx.drawImage(this.canvas, 0, 0, this.aboveImage.width, this.aboveImage.height, 0, 0, this.aboveImage.width, this.aboveImage.height);
 
         if( row_num + 1 < CONSTANTS.num_rows ) {
             this.belowImage.height = (CONSTANTS.num_rows - row_num - 1) * CONSTANTS.block_size;
-            
+
             this.ctx = this.belowImage.getContext('2d');
             this.ctx.drawImage(this.canvas,
                 0,
@@ -314,12 +317,12 @@ var Board = function () {
         this.ctx.fillStyle = CONSTANTS.game_area_color;
         this.ctx.fillRect(0, 0, CONSTANTS.block_size * CONSTANTS.num_cols, CONSTANTS.block_size * CONSTANTS.num_rows);
 
-        this.ctx.drawImage(this.aboveImage, 
-            0, 
-            0, 
-            this.aboveImage.width, 
-            this.aboveImage.height, 
-            0, 
+        this.ctx.drawImage(this.aboveImage,
+            0,
+            0,
+            this.aboveImage.width,
+            this.aboveImage.height,
+            0,
             this.canvas.height - (this.belowImage.height + this.aboveImage.height),
             this.aboveImage.width,
             this.aboveImage.height);
@@ -340,7 +343,7 @@ var Board = function () {
 
 function Preview () {
     this.preview = document.getElementById('preview');
-    
+
     this.previewContext = this.preview.getContext('2d');
     this.previewContext.fillStyle = 'rgb(221, 204, 187)';
     this.previewContext.fillRect(0,0, 84, 52);
@@ -363,7 +366,7 @@ function Game () {
     this.gameOver = false;
     this.score = 0;
     this.rows = 0;
-    this.level = 0;
+    this.level = 1;
     this.board = new Board();
     this.oldBoard = new Board();
     this.preview = new Preview();
@@ -376,8 +379,8 @@ function Game () {
         this.board.drawCow(this.piece);
         this.preview.drawCow(this.nextPiece);
 
-        this.intervalID = setInterval( (function(self) { 
-            return function () { 
+        this.intervalID = setInterval( (function(self) {
+            return function () {
                 self.advancePiece();
             };
         }(this)), this.interval);
@@ -425,7 +428,7 @@ function Game () {
 
     this.dropPiece = function () {
         this.dropIntervalID = setInterval( (function(self) {
-            return function () { 
+            return function () {
                 self.advancePiece();
             };
         }(this)), 10);
@@ -448,9 +451,24 @@ function Game () {
         this.gameOver = true;
     };
 
-    this.increaseRowsCount = function () {
-        this.rows = this.rows + 1;
+    this.increaseRowsCount = function (num_rows_zapped) {
+        this.rows = this.rows + num_rows_zapped;
         document.getElementById('rows').innerText = String(this.rows);
+
+        this.increaseScore(num_rows_zapped);
+    };
+
+    this.increaseScore = function (num_rows_zapped) {
+        if (num_rows_zapped == 1) {
+            this.score += 50 * (this.level + 1);
+        } else if (num_rows_zapped == 2) {
+            this.score += 150 * (this.level + 1);
+        } else if (num_rows_zapped == 3) {
+            this.score += 500 * (this.level + 1);
+        } else if (num_rows_zapped == 4) {
+            this.score += 1000 * (this.level + 1);
+        }
+        document.getElementById('score').innerHTML = this.score;
     };
 
     this.newPiece = function () {
@@ -481,14 +499,14 @@ function init() {
                 break;
             case 38:
                 game.rotatePiece();
-                break;            
+                break;
             case 39: // right
                 game.movePieceRight();
                 break;
             case 40: // down
                 game.advancePiece();
                 break;
-        }      
+        }
     };
 
     game.start();
