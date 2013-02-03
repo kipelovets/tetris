@@ -276,7 +276,7 @@ var Board = function () {
         if (recurse) {
             this.checkRowCompletions(num_zapped + 1);
         } else {
-            this.parent.increaseRowsCount(num_zapped);
+            this.parent.rowCompletionsFinished(num_zapped);
         }
     };
 
@@ -419,7 +419,7 @@ function Game () {
         var provisional = this.piece.clone();
         provisional.move_left();
 
-        if ( !this.board.isConflicted(provisional) ) {
+        if (!this.board.isConflicted(provisional)) {
             this.board.eraseCow(this.piece);
             this.piece.move_left();
             this.board.drawCow(this.piece);
@@ -451,11 +451,25 @@ function Game () {
         this.gameOver = true;
     };
 
+    this.rowCompletionsFinished = function (num_rows_zapped) {
+        this.updateLevel(num_rows_zapped);
+        this.increaseScore(num_rows_zapped);
+        this.increaseRowsCount(num_rows_zapped);
+    };
+
+    this.updateLevel = function (num_rows_zapped) {
+        if(Math.floor(((this.rows + num_rows_zapped) / 10)) == this.level + 1) {
+            this.level += 1;
+
+            // UPDATE TIMER
+
+            document.getElementById('level').innerText = String(this.level);
+        }
+    };
+
     this.increaseRowsCount = function (num_rows_zapped) {
         this.rows = this.rows + num_rows_zapped;
         document.getElementById('rows').innerText = String(this.rows);
-
-        this.increaseScore(num_rows_zapped);
     };
 
     this.increaseScore = function (num_rows_zapped) {
@@ -468,7 +482,7 @@ function Game () {
         } else if (num_rows_zapped == 4) {
             this.score += 1000 * (this.level + 1);
         }
-        document.getElementById('score').innerHTML = this.score;
+        document.getElementById('score').innerText = String(this.score);
     };
 
     this.newPiece = function () {
