@@ -63,6 +63,25 @@ var Breeds = {
     'Purple Cow': 9
     };
 
+// NAME, SCORE, NUMBER OF ROWS
+var DefaultHighscores = [
+    ['The Mad Cow', 200000, 220],
+    ['Bob', 175000, 205],
+    ['Holy Cow!', 150000, 190],
+    ['moooooooooooooooooooooooooooo!', 125000, 175],
+    ['David', 100000, 160],
+    ['Jonathan', 75000, 130],
+    ['Jonny', 50000, 115],
+    ['Kyle Lord of Darkness', 40000, 105],
+    ['The Ultimate Pickle', 30000, 90],
+    ['hello', 20000, 70],
+    ['Fred', 10000, 50],
+    ['gtup05 k5980gnv5t eklt', 5000, 30],
+    ['a purple cow', 3000, 20],
+    [':)', 1000, 10],
+    ['Mr. Anonymous Guy', 500, 5],
+    ];
+
 // these could be functions, but this is pretty quick
 var Breed_Names = Object.keys(Breeds);
 
