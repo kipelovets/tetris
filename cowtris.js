@@ -258,7 +258,7 @@ var Board = function () {
     this.checkRowCompletions = function (Num_Zapped) {
         var full_rows = [],
             row_num,
-            recurse = false
+            recurse = false,
             num_zapped = Num_Zapped | 0;
 
         for (row_num = 0; row_num < this.board.length; row_num++) {
@@ -356,7 +356,7 @@ function Preview () {
 }
 
 function Game () {
-    this.interval = 200;
+    this.interval = 1000 * (0.5 - 0.0472);
     this.intervalID = null;
     this.dropIntervalID = null;
     this.piece = new Cow(Math.floor(Math.random() * 7));
@@ -461,7 +461,15 @@ function Game () {
         if(Math.floor(((this.rows + num_rows_zapped) / 10)) == this.level + 1) {
             this.level += 1;
 
-            // UPDATE TIMER
+            clearInterval(this.intervalID);
+
+            this.interval = 1000 * (0.5 - (0.0472 * this.level) );
+
+            this.intervalID = setInterval( (function(self) {
+                return function () {
+                    self.advancePiece();
+                };
+            }(this)), this.interval);
 
             document.getElementById('level').innerText = String(this.level);
         }
