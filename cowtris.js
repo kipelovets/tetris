@@ -366,7 +366,7 @@ function Game () {
     this.gameOver = false;
     this.score = 0;
     this.rows = 0;
-    this.level = 1;
+    this.level = 0;
     this.board = new Board();
     this.oldBoard = new Board();
     this.preview = new Preview();
