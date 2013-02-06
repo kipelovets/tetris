@@ -1,9 +1,75 @@
 <html>
-  <head>
-    <title>Tetris</title>
-    <script type="text/javascript" src="script.js"></script>
-  </head>
-  <body onload="init()">
-    <canvas width="800" height="600"></canvas>
-  </body>
+    
+    <head>
+        <title>
+            Cowtris
+        </title>
+        <link rel="stylesheet" type="text/css" href="style.css" />
+    </head>
+    
+    <body onload="init()">
+        <div class="overlays">
+            <div id="game_over" class="message">
+                game over
+            </div>
+            <div id="paused" class="message">
+                pasued
+            </div>
+        </div>
+        <div id="container">
+            <div id="left">
+                <canvas id="game_canvas" width="200" height="440">
+                </canvas>
+            </div>
+            <div id="right">
+                <img id="title" src="./resources/images/title.png" />
+                <div id="info_container">
+                    <table>
+                        <tr>
+                            <td>
+                                Score
+                            </td>
+                            <td id="score">
+                                0
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Rows
+                            </td>
+                            <td id="rows">
+                                0
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Level
+                            </td>
+                            <td id="level">
+                                1
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Next
+                            </td>
+                            <td id="next">
+                                <canvas id="preview" width="84" height="52">
+                                </canvas>
+                                <br>
+                                <span id="preview_name">
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript" src="cowtris.js"></script>
+        <audio id="audio_madcow" src="resources/sounds/madcow.wav" preload="auto"/>
+        <audio id="audio_row" src="resources/sounds/Zap.wav" preload="auto"/>
+        <audio id="audio_multirow" src="resources/sounds/Zap2.wav" preload="auto"/>
+        <audio id="audio_gameover" src="resources/sounds/Die.wav" preload="auto"/>
+    </body>
+
 </html>
